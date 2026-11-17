@@ -1,0 +1,186 @@
+---
+/**
+ * Private analytics dashboard. Not in the nav, noindex, disallowed in robots.txt,
+ * and never tracked. Data comes from GET /stats on the API with the ADMIN_TOKEN.
+ */
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Stats" description="Private analytics." noindex noTrack>
+  <section class="container-page py-12">
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="eyebrow mb-2">Private</p>
+        <h1 class="text-4xl font-extrabold">Stats</h1>
+      </div>
+      <div id="controls" class="hidden items-center gap-2" role="group" aria-label="Date range">
+        <button type="button" data-range="7" class="range-btn">
+          Last 7 days
+        </button>
+        <button type="button" data-range="30" class="range-btn">
+          Last 30 days
+        </button>
+        <button type="button" id="logout" class="ml-2 text-sm text-muted hover:text-accent">
+          Forget token
+        </button>
+      </div>
+    </div>
+
+    <form id="login" class="card mt-8 max-w-md space-y-4 p-6">
+      <label class="block space-y-1.5">
+        <span class="text-sm font-medium">Admin token</span>
+        <input id="token" type="password" class="input" autocomplete="current-password" required />
+      </label>
+      <p class="text-xs text-muted">Kept in this tab's session storage only.</p>
+      <button class="btn-primary" type="submit">
+        Load stats
+      </button>
+      <p id="login-error" class="text-sm text-accent" role="alert"></p>
+    </form>
+
+    <div id="dashboard" class="mt-8 hidden space-y-6">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div class="card p-6">
+          <p class="text-sm text-muted">Page views</p>
+          <p id="tile-views" class="mt-1 text-5xl font-semibold">
+            –
+          </p>
+        </div>
+        <div class="card p-6">
+          <p class="text-sm text-muted">
+            Unique visitors <span class="text-xs">(sum of daily uniques)</span>
+          </p>
+          <p id="tile-visitors" class="mt-1 text-5xl font-semibold">
+            –
+          </p>
+        </div>
+      </div>
+
+      <figure class="card p-6">
+        <figcaption class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+          <span class="font-display text-lg font-bold">Page views per day</span>
+          <span id="chart-range" class="text-xs text-muted"></span>
+        </figcaption>
+        <div id="chart" class="relative"></div>
+        <details class="mt-4 text-sm">
+          <summary class="cursor-pointer text-muted">Show as table</summary>
+          <table class="mt-3 w-full text-left tabular-nums">
+            <thead class="text-muted">
+              <tr>
+                <th class="py-1 font-medium">Day</th>
+                <th class="py-1 font-medium">Views</th>
+                <th class="py-1 font-medium">Visitors</th>
+              </tr>
+            </thead>
+            <tbody id="daily-table"></tbody>
+          </table>
+        </details>
+      </figure>
+
+      <div class="grid gap-6 lg:grid-cols-2">
+        <section class="card p-6" aria-labelledby="pages-title">
+          <h2 id="pages-title" class="mb-4 font-display text-lg font-bold">
+            Top pages
+          </h2>
+          <ol id="top-pages" class="space-y-3"></ol>
+        </section>
+        <section class="card p-6" aria-labelledby="refs-title">
+          <h2 id="refs-title" class="mb-4 font-display text-lg font-bold">
+            Top referrers
+          </h2>
+          <ol id="top-referrers" class="space-y-3"></ol>
+        </section>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .range-btn {
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    padding: 0.375rem 0.9rem;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+  .range-btn[aria-pressed='true'] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+</style>
+
+<script>
+  import { renderStats, type StatsResponse } from '../lib/stats-chart';
+
+  const api = document.documentElement.dataset.api ?? '';
+  const KEY = 'ln-admin-token';
+  const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+  const login = $<HTMLFormElement>('login');
+  const loginError = $('login-error');
+  const dashboard = $('dashboard');
+  const controls = $('controls');
+  let data: StatsResponse | null = null;
+  let range = 7;
+
+  function getToken() {
+    try {
+      return sessionStorage.getItem(KEY);
+    } catch {
+      return null;
+    }
+  }
+
+  async function load(token: string) {
+    loginError.textContent = '';
+    try {
+      const res = await fetch(`${api}/stats`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.status === 401) throw new Error('That token was not accepted.');
+      if (!res.ok) throw new Error(`The API returned ${res.status}.`);
+      data = (await res.json()) as StatsResponse;
+      try {
+        sessionStorage.setItem(KEY, token);
+      } catch {
+        /* ignore */
+      }
+      login.classList.add('hidden');
+      dashboard.classList.remove('hidden');
+      controls.classList.replace('hidden', 'flex');
+      draw();
+    } catch (err) {
+      login.classList.remove('hidden');
+      loginError.textContent = err instanceof TypeError ? 'Could not reach the API.' : (err as Error).message;
+    }
+  }
+
+  function draw() {
+    if (!data) return;
+    document.querySelectorAll<HTMLButtonElement>('[data-range]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(Number(b.dataset.range) === range));
+    });
+    renderStats(data, range);
+  }
+
+  login.addEventListener('submit', (e) => {
+    e.preventDefault();
+    load($<HTMLInputElement>('token').value.trim());
+  });
+  document.querySelectorAll<HTMLButtonElement>('[data-range]').forEach((b) =>
+    b.addEventListener('click', () => {
+      range = Number(b.dataset.range);
+      draw();
+    }),
+  );
+  $('logout').addEventListener('click', () => {
+    try {
+      sessionStorage.removeItem(KEY);
+    } catch {
+      /* ignore */
+    }
+    location.reload();
+  });
+  window.addEventListener('resize', draw);
+
+  const saved = getToken();
+  if (saved) load(saved);
+</script>
