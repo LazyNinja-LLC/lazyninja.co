@@ -4,6 +4,7 @@
  * Outputs are committed, so this does not run during normal builds.
  */
 import sharp from 'sharp';
+import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
@@ -56,8 +57,8 @@ sizes.forEach((size, i) => {
 });
 await writeFile(pub('favicon.ico'), Buffer.concat([header, ...images]));
 
-// Placeholder résumé PDF (hand-built, single page, Helvetica)
-{
+// Placeholder résumé PDF (hand-built, single page, Helvetica). Never overwrites a real résumé.
+if (!existsSync(pub('resume.pdf'))) {
   const lines = [
     ['F2', 22, 'R\\351sum\\351 placeholder'],
     ['F1', 12, 'TODO(Tyler): replace site/public/resume.pdf with your real r\\351sum\\351.'],

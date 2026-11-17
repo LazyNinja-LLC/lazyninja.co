@@ -1,0 +1,175 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # Daily site rebuild so build-time GitHub data (new repos, stars) stays fresh.
+    - cron: '23 9 * * *'
+
+# Never run two deploys at once; queue instead of cancelling a deploy mid-rsync.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  SITE_PATH: /home/lazyjapy/public_html/
+  API_PATH: /home/lazyjapy/api/
+  NODE_ACTIVATE: /home/lazyjapy/nodevenv/api/20/bin/activate
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      site: ${{ steps.diff.outputs.site }}
+      api: ${{ steps.diff.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          site=false
+          api=false
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            site=true
+            api=true
+          elif [ "$EVENT" = "schedule" ]; then
+            site=true
+          elif [ -z "$BEFORE" ] || [ "$BEFORE" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            echo "First push or rewritten history: deploying everything."
+            site=true
+            api=true
+          else
+            changed=$(git diff --name-only "$BEFORE" "$SHA")
+            echo "Changed files:"
+            echo "$changed" | sed 's/^/  /'
+            if echo "$changed" | grep -qE '^(site|deploy|shared)/'; then site=true; fi
+            if echo "$changed" | grep -qE '^(api|shared)/'; then api=true; fi
+          fi
+          echo "site=$site" >> "$GITHUB_OUTPUT"
+          echo "api=$api" >> "$GITHUB_OUTPUT"
+          echo "Deploy site: $site / deploy API: $api"
+
+  ci:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+    with:
+      strict-github: true
+    secrets: inherit
+
+  site:
+    name: Deploy site
+    needs: [changes, ci]
+    if: needs.changes.outputs.site == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: site-dist
+          path: dist
+      - name: Check build output
+        run: |
+          test -f dist/index.html
+          test -f dist/.htaccess
+          if grep -q "script-src 'self' __CSP_SCRIPT_HASHES__" dist/.htaccess; then
+            echo "::error::CSP hashes were not injected into dist/.htaccess"
+            exit 1
+          fi
+      - uses: ./.github/actions/ssh-setup
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          user: ${{ secrets.SSH_USER }}
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+      - name: Sync site to public_html
+        run: |
+          # .well-known/ (AutoSSL) and cgi-bin/ are excluded, so --delete never touches them.
+          rsync -az --delete --itemize-changes \
+            --exclude '.well-known/' \
+            --exclude 'cgi-bin/' \
+            dist/ "deploy:${SITE_PATH}"
+
+  api:
+    name: Deploy API
+    needs: [changes, ci]
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: api-dist
+          path: api-dist
+      - name: Check build output
+        run: |
+          for f in app.js sync.js package.json package-lock.json; do test -f "api-dist/$f"; done
+          ls -la api-dist
+      - uses: ./.github/actions/ssh-setup
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          user: ${{ secrets.SSH_USER }}
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+      - name: Sync API to /home/lazyjapy/api
+        run: |
+          # The server-only .env, installed modules and cPanel/Passenger files are never touched.
+          rsync -az --delete --itemize-changes \
+            --exclude '.env' \
+            --exclude 'node_modules/' \
+            --exclude 'tmp/' \
+            --exclude 'logs/' \
+            --exclude 'public/' \
+            --exclude '.htaccess' \
+            --exclude 'stderr.log' \
+            api-dist/ "deploy:${API_PATH}"
+      - name: Install dependencies and restart
+        run: |
+          if ssh deploy "test -f '${NODE_ACTIVATE}'"; then
+            ssh deploy "set -e; source '${NODE_ACTIVATE}'; cd '${API_PATH}'; npm ci --omit=dev --no-audit --no-fund; mkdir -p tmp; touch tmp/restart.txt"
+            echo "API dependencies installed and Passenger restart requested."
+          else
+            echo "::warning title=API not started::Node app not created in cPanel yet (${NODE_ACTIVATE} is missing). Files were synced; skipped npm ci and restart. See DEPLOY.md, one-time server setup."
+          fi
+
+  smoke:
+    name: Smoke test
+    needs: [site, api]
+    if: always() && (needs.site.result == 'success' || needs.api.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Site responds (required)
+        run: |
+          for i in 1 2 3 4 5; do
+            if curl -fsS -o /dev/null -w "https://lazyninja.co/ -> HTTP %{http_code} in %{time_total}s\n" https://lazyninja.co/; then
+              exit 0
+            fi
+            echo "Attempt $i failed; retrying in 10s"
+            sleep 10
+          done
+          echo "::error::https://lazyninja.co/ did not respond successfully"
+          exit 1
+      - name: API health (warning only)
+        run: |
+          for i in 1 2 3 4 5; do
+            if body=$(curl -fsS https://api.lazyninja.co/health); then
+              echo "API: $body"
+              exit 0
+            fi
+            echo "Attempt $i failed; retrying in 10s"
+            sleep 10
+          done
+          echo "::warning title=API health check failed::https://api.lazyninja.co/health did not respond. Expected until the cPanel Node app is set up."

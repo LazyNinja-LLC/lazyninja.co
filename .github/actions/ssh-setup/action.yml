@@ -1,0 +1,45 @@
+name: SSH setup
+description: Writes the deploy key and pinned known_hosts, and defines the `deploy` SSH host alias. Never disables host key checking.
+inputs:
+  host:
+    required: true
+  port:
+    required: true
+  user:
+    required: true
+  private-key:
+    required: true
+  known-hosts:
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Configure SSH
+      shell: bash
+      env:
+        SSH_HOST: ${{ inputs.host }}
+        SSH_PORT: ${{ inputs.port }}
+        SSH_USER: ${{ inputs.user }}
+        SSH_PRIVATE_KEY: ${{ inputs.private-key }}
+        SSH_KNOWN_HOSTS: ${{ inputs.known-hosts }}
+      run: |
+        set -euo pipefail
+        install -d -m 700 ~/.ssh
+        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+        chmod 600 ~/.ssh/deploy_key
+        printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        chmod 600 ~/.ssh/known_hosts
+        {
+          echo "Host deploy"
+          echo "  HostName ${SSH_HOST}"
+          echo "  Port ${SSH_PORT}"
+          echo "  User ${SSH_USER}"
+          echo "  IdentityFile ~/.ssh/deploy_key"
+          echo "  IdentitiesOnly yes"
+          echo "  StrictHostKeyChecking yes"
+          echo "  UserKnownHostsFile ~/.ssh/known_hosts"
+          echo "  ServerAliveInterval 30"
+          echo "  ConnectTimeout 20"
+        } > ~/.ssh/config
+        chmod 600 ~/.ssh/config
+        echo "SSH configured for the deploy host (strict host key checking on)."

@@ -1,0 +1,80 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    # main is covered by deploy.yml, which calls this workflow before deploying.
+    branches-ignore: [main]
+  workflow_call:
+    inputs:
+      strict-github:
+        description: Fail the site build if the GitHub project fetch fails (used by deploys)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run check:htaccess
+
+  site:
+    name: Site (type-check + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+      - run: npm ci --prefix site
+      - name: Type-check
+        run: npm run typecheck --prefix site
+      - name: Build (fetches GitHub projects)
+        run: npm run build --prefix site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_FETCH_STRICT: ${{ inputs.strict-github && '1' || '' }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-dist
+          path: site/dist/
+          include-hidden-files: true # ships .htaccess
+          retention-days: 7
+
+  api:
+    name: API (type-check + test + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # The server runs Node 20, so the API is tested and built on it.
+          node-version: 20
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+      - run: npm ci --prefix api
+      - name: Type-check
+        run: npm run typecheck --prefix api
+      - name: Test
+        run: npm test --prefix api
+      - name: Build
+        run: npm run build --prefix api
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-dist
+          path: api/dist/
+          retention-days: 7
