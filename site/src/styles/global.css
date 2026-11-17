@@ -1,0 +1,248 @@
+/*
+ * LazyNinja design system.
+ * Tokens live in @theme so Tailwind generates utilities (bg-bg, text-muted,
+ * text-accent, font-display, …). Semantic colors resolve to CSS variables that
+ * swap between the dark (default) and light themes.
+ * See DECISIONS.md → "Design system" for the rationale.
+ */
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme {
+
+  /* Raw brand palette */
+  --color-ink-950: #08090c;
+  --color-ink-900: #0c0e12;
+  --color-ink-800: #14171d;
+  --color-ink-700: #1b1f27;
+  --color-ink-600: #2a2f3a;
+  --color-paper-50: #fbfaf7;
+  --color-paper-100: #f7f5f0;
+  --color-paper-200: #efece4;
+  --color-paper-300: #ddd8cc;
+  --color-vermilion-400: #ff7a5c;
+  --color-vermilion-500: #ff5a36;
+  --color-vermilion-700: #c2341a;
+  --color-vermilion-800: #9c2611;
+
+  --radius-card: 1.25rem;
+  --shadow-glow: 0 0 0 1px var(--border), 0 20px 60px -30px rgb(255 90 54 / 0.45);
+
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-spin-slow: spin 24s linear infinite;
+  --animate-blink: blink 6s steps(1) infinite;
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+  @keyframes blink {
+    0%,
+    92%,
+    100% {
+      transform: scaleY(1);
+    }
+    94%,
+    97% {
+      transform: scaleY(0.1);
+    }
+  }
+}
+
+/* Semantic tokens (theme-aware) exposed as Tailwind colors: bg-bg, text-fg, border-border… */
+@theme inline {
+  /* Typography pair: Bricolage Grotesque (display) + Inter (text), JetBrains Mono for code.
+     The --font-* variables come from Astro's Fonts API (astro.config.mjs) incl. metric-matched fallbacks. */
+  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-shipped: var(--shipped);
+  --color-building: var(--building);
+  --color-personal: var(--personal);
+}
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: var(--color-ink-900);
+  --surface: var(--color-ink-800);
+  --surface-2: var(--color-ink-700);
+  --border: var(--color-ink-600);
+  --fg: #ecebe6;
+  --muted: #a3a6ae;
+  --accent: var(--color-vermilion-500);
+  --accent-strong: var(--color-vermilion-400);
+  --accent-ink: var(--color-ink-900);
+  --accent-soft: rgb(255 90 54 / 0.12);
+  --shipped: #5ee0a0;
+  --building: #f5c451;
+  --personal: #8ab4ff;
+  --grid-line: rgb(255 255 255 / 0.04);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: var(--color-paper-100);
+  --surface: #ffffff;
+  --surface-2: var(--color-paper-200);
+  --border: var(--color-paper-300);
+  --fg: #14161b;
+  --muted: #565a63;
+  --accent: var(--color-vermilion-700);
+  --accent-strong: var(--color-vermilion-800);
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(194 52 26 / 0.09);
+  --shipped: #11734a;
+  --building: #8a5a00;
+  --personal: #2c5cc5;
+  --grid-line: rgb(0 0 0 / 0.05);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--fg);
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+  }
+  body {
+    @apply bg-bg font-sans text-fg antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display tracking-tight text-balance;
+  }
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-ink);
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+}
+
+/* Reusable component utilities (usable with variants and @apply) */
+@utility container-page {
+  @apply mx-auto w-full max-w-6xl px-5 sm:px-8;
+}
+@utility eyebrow {
+  @apply font-mono text-xs font-medium tracking-[0.18em] text-accent uppercase;
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-[transform,background-color,color,border-color] duration-200 motion-safe:hover:-translate-y-0.5;
+}
+@utility btn-primary {
+  @apply btn bg-accent text-accent-ink hover:bg-accent-strong;
+}
+@utility btn-ghost {
+  @apply btn border border-border text-fg hover:border-accent hover:text-accent;
+}
+@utility card {
+  @apply rounded-[var(--radius-card)] border border-border bg-surface;
+}
+@utility badge {
+  @apply inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-[0.7rem] font-medium tracking-wide uppercase;
+}
+@utility badge-lazyninja {
+  @apply badge border-accent/40 bg-accent-soft text-accent;
+}
+@utility badge-personal {
+  @apply badge border-dashed border-personal/50 text-personal;
+}
+@utility badge-shipped {
+  @apply badge border-shipped/40 text-shipped;
+}
+@utility badge-building {
+  @apply badge border-building/40 text-building;
+}
+@utility link {
+  @apply text-accent underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent;
+}
+@utility bg-grid {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+@utility input {
+  @apply w-full rounded-xl border border-border bg-surface px-4 py-3 text-fg placeholder:text-muted/80 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40;
+}
+
+/* Long-form content */
+.prose-ninja {
+  --tw-prose-body: var(--fg);
+  --tw-prose-headings: var(--fg);
+  --tw-prose-lead: var(--muted);
+  --tw-prose-links: var(--accent);
+  --tw-prose-bold: var(--fg);
+  --tw-prose-counters: var(--muted);
+  --tw-prose-bullets: var(--accent);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--fg);
+  --tw-prose-quote-borders: var(--accent);
+  --tw-prose-captions: var(--muted);
+  --tw-prose-code: var(--fg);
+  --tw-prose-pre-code: inherit;
+  --tw-prose-pre-bg: var(--surface);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
+}
+.prose-ninja :where(code):not(:where(pre *)) {
+  @apply rounded-md bg-surface-2 px-1.5 py-0.5 font-normal;
+}
+.prose-ninja :where(code):not(:where(pre *))::before,
+.prose-ninja :where(code):not(:where(pre *))::after {
+  content: none;
+}
+.prose-ninja pre {
+  @apply rounded-xl border border-border;
+}
+
+/* Shiki dual themes (defaultColor: false) */
+.astro-code,
+.astro-code span {
+  color: var(--shiki-dark);
+  background-color: var(--shiki-dark-bg);
+}
+[data-theme='light'] .astro-code,
+[data-theme='light'] .astro-code span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

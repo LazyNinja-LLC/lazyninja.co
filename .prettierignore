@@ -1,0 +1,11 @@
+node_modules
+dist
+.astro
+deploy/out
+package-lock.json
+site/src/data/github.json
+site/public/resume.pdf
+*.md
+*.mdx
+*.htaccess
+.htaccess

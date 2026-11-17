@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.astro/
+.env
+.env.*
+!.env.example
+deploy/out/
+site/src/data/github.json
+*.log
+.DS_Store
+coverage/
+.lighthouse/

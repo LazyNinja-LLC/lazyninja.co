@@ -1,0 +1,34 @@
+{
+  "name": "lazyninja.co",
+  "private": true,
+  "description": "lazyninja.co: static Astro site + small Express API for LazyNinja LLC",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "bootstrap": "npm ci && npm ci --prefix site && npm ci --prefix api",
+    "dev": "node scripts/dev.mjs",
+    "dev:site": "npm run dev --prefix site",
+    "dev:api": "npm run dev --prefix api",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "npm run typecheck --prefix site && npm run typecheck --prefix api",
+    "test": "npm test --prefix api",
+    "build": "npm run build --prefix site && npm run build --prefix api",
+    "check:htaccess": "node scripts/check-htaccess.mjs",
+    "ci": "npm run lint && npm run check:htaccess && npm run typecheck && npm test && npm run build",
+    "package": "node scripts/package.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-plugin-astro": "^1.7.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "prettier-plugin-astro": "^1.1.2",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.73.0"
+  }
+}

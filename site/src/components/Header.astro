@@ -1,0 +1,49 @@
+---
+import { NAV, SITE } from '../config/site';
+import Logo from './Logo.astro';
+import { cleanPath } from '../lib/seo';
+import ThemeToggle from './ThemeToggle';
+
+const path = cleanPath(Astro.url.pathname);
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+---
+
+<header class="sticky top-0 z-40 border-b border-border/70 bg-bg/80 backdrop-blur-md">
+  <div class="container-page flex flex-wrap items-center gap-x-6 gap-y-2 py-3">
+    <a href="/" class="group flex items-center gap-2.5 rounded-lg" aria-label={`${SITE.name} home`}>
+      <Logo size={34} class="transition-transform duration-300 motion-safe:group-hover:-rotate-6" />
+      <span class="font-display text-lg font-bold tracking-tight">
+        Lazy<span class="text-accent">Ninja</span>
+      </span>
+    </a>
+
+    <nav
+      aria-label="Main"
+      class="order-3 -mx-5 w-[calc(100%+2.5rem)] overflow-x-auto sm:order-none sm:mx-0 sm:w-auto sm:flex-1"
+    >
+      <ul class="flex items-center gap-1 px-5 text-sm font-medium sm:justify-end sm:px-0">
+        {NAV.map(({ href, label }) => (
+          <li>
+            <a
+              href={href}
+              aria-current={isActive(href) ? 'page' : undefined}
+              class:list={[
+                'block rounded-full px-3 py-2 whitespace-nowrap transition-colors hover:text-accent',
+                isActive(href) ? 'bg-accent-soft text-accent' : 'text-muted',
+              ]}
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="ml-auto flex items-center gap-2 sm:ml-0">
+      <a href="/contact" class="btn-primary hidden !py-2 sm:inline-flex">
+        Say hi
+      </a>
+      <ThemeToggle client:idle />
+    </div>
+  </div>
+</header>

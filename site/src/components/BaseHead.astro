@@ -1,0 +1,96 @@
+---
+import '../styles/global.css';
+import { Font } from 'astro:assets';
+import { SITE } from '../config/site';
+import { absoluteUrl, ogImagePath, organizationJsonLd, type JsonLd } from '../lib/seo';
+
+export interface Props {
+  title?: string | undefined;
+  description?: string | undefined;
+  /** Path of a generated OG image or any absolute/rooted image URL. */
+  image?: string | undefined;
+  type?: 'website' | 'article';
+  noindex?: boolean;
+  publishedTime?: Date | undefined;
+  modifiedTime?: Date | undefined;
+  jsonLd?: JsonLd[];
+}
+
+const {
+  title,
+  description = SITE.description,
+  image = ogImagePath('default'),
+  type = 'website',
+  noindex = false,
+  publishedTime,
+  modifiedTime,
+  jsonLd = [],
+} = Astro.props;
+
+const fullTitle = title ? `${title} · ${SITE.name}` : `${SITE.name} · ${SITE.tagline}`;
+const canonical = absoluteUrl(Astro.url.pathname);
+const imageUrl = absoluteUrl(image);
+// Organization JSON-LD is site-wide; pages may add more (Person on About, BlogPosting on posts).
+const schemas = [organizationJsonLd(), ...jsonLd];
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{fullTitle}</title>
+<Font cssVariable="--font-bricolage" preload />
+<Font cssVariable="--font-inter" preload />
+<Font cssVariable="--font-jetbrains" />
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex, nofollow" />}
+<meta name="generator" content={Astro.generator} />
+
+<!-- Theme: runs before paint to avoid a flash. Dark by default, honors system + saved choice. -->
+<script is:inline>
+  (function () {
+    const d = document.documentElement;
+    try {
+      const s = localStorage.getItem('theme');
+      d.dataset.theme =
+        s === 'light' || s === 'dark'
+          ? s
+          : matchMedia('(prefers-color-scheme: light)').matches
+            ? 'light'
+            : 'dark';
+    } catch {
+      d.dataset.theme = 'dark';
+    }
+  })();
+</script>
+<meta name="theme-color" content="#0c0e12" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
+<meta name="color-scheme" content="dark light" />
+
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<link rel="manifest" href="/site.webmanifest" />
+<link rel="alternate" type="application/rss+xml" title={`${SITE.name} blog`} href="/rss.xml" />
+<link rel="sitemap" href="/sitemap.xml" />
+<link rel="preconnect" href={SITE.apiUrl} crossorigin />
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={SITE.name} />
+<meta property="og:locale" content={SITE.locale} />
+<meta property="og:title" content={title ?? SITE.name} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={title ?? SITE.name} />
+{publishedTime && <meta property="article:published_time" content={publishedTime.toISOString()} />}
+{modifiedTime && <meta property="article:modified_time" content={modifiedTime.toISOString()} />}
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title ?? SITE.name} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+
+{schemas.map((schema) => (
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+))}
