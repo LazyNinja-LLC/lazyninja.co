@@ -1,0 +1,74 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { LABS, type LabStatus } from '../config/site';
+import { ogImagePath } from '../lib/seo';
+
+const statusStyle: Record<LabStatus, { label: string; cls: string }> = {
+  live: { label: 'Live', cls: 'badge-shipped' },
+  beta: { label: 'Beta', cls: 'badge-building' },
+  planned: { label: 'Planned', cls: 'badge border-border text-muted' },
+  retired: { label: 'Retired', cls: 'badge border-border text-muted line-through' },
+};
+---
+
+<BaseLayout
+  title="Labs"
+  description="Live demos and experiments from LazyNinja, hosted on lazyninja.co subdomains."
+  image={ogImagePath('labs')}
+>
+  <PageHeader
+    eyebrow="Labs"
+    title="Demos & experiments"
+    lead="Live demos and half-baked ideas, each on its own lazyninja.co subdomain. Expect sharp edges."
+  />
+  <section class="container-page py-12">
+    <ul class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {LABS.map((lab) => {
+        const host = new URL(lab.url).host;
+        const status = statusStyle[lab.status];
+        return (
+          <li>
+            <article class="card group relative flex h-full flex-col overflow-hidden transition-colors hover:border-accent/60">
+              {lab.image ? (
+                <img
+                  src={lab.image}
+                  alt=""
+                  class="aspect-video w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  width="640"
+                  height="360"
+                />
+              ) : (
+                <div
+                  class="bg-grid grid aspect-video place-items-center bg-surface-2 font-mono text-sm text-muted"
+                  aria-hidden="true"
+                >
+                  {host}
+                </div>
+              )}
+              <div class="flex flex-1 flex-col gap-3 p-6">
+                <span class={status.cls}>{status.label}</span>
+                <h2 class="font-display text-xl font-bold">
+                  <a
+                    href={lab.url}
+                    class="after:absolute after:inset-0 group-hover:text-accent"
+                    rel="noopener"
+                  >
+                    {lab.name}
+                  </a>
+                </h2>
+                <p class="text-sm text-muted">{lab.description}</p>
+                <p class="mt-auto font-mono text-xs text-accent">{host} ↗</p>
+              </div>
+            </article>
+          </li>
+        );
+      })}
+    </ul>
+    <p class="mt-10 text-sm text-muted">
+      Labs entries live in <code class="font-mono">site/src/config/site.ts</code>.
+    </p>
+  </section>
+</BaseLayout>

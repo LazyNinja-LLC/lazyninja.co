@@ -1,0 +1,151 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import { Image, getImage } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { formatDate, getPosts, readingTime, slugifyTag } from '../../lib/content';
+import { absoluteUrl, blogPostingJsonLd, ogImagePath } from '../../lib/seo';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  // Posts are sorted newest first: "previous" is older, "next" is newer.
+  return posts.map((post, i) => ({
+    params: { slug: post.id },
+    props: { post, older: posts[i + 1] ?? null, newer: posts[i - 1] ?? null },
+  }));
+}
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  older: CollectionEntry<'blog'> | null;
+  newer: CollectionEntry<'blog'> | null;
+}
+
+const { post, older, newer } = Astro.props;
+const { Content, headings } = await render(post);
+const minutes = readingTime(post.body);
+const toc = headings.filter((h) => h.depth === 2 || h.depth === 3);
+// Table of contents only for long posts.
+const showToc = toc.length >= 3 || minutes >= 6;
+const og = ogImagePath(`blog/${post.id}`);
+const coverUrl = post.data.cover ? (await getImage({ src: post.data.cover, width: 1200 })).src : undefined;
+const url = absoluteUrl(`/blog/${post.id}`);
+---
+
+<BaseLayout
+  title={post.data.title}
+  description={post.data.description}
+  image={og}
+  type="article"
+  publishedTime={post.data.date}
+  modifiedTime={post.data.updated}
+  jsonLd={[
+    blogPostingJsonLd({
+      title: post.data.title,
+      description: post.data.description,
+      url,
+      date: post.data.date,
+      updated: post.data.updated,
+      image: coverUrl ? absoluteUrl(coverUrl) : absoluteUrl(og),
+      tags: post.data.tags,
+    }),
+  ]}
+>
+  <article class="container-page py-14">
+    <header class="mx-auto max-w-3xl space-y-5">
+      <a href="/blog" class="link text-sm">
+        ← All posts
+      </a>
+      <p class="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-muted">
+        <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+        {post.data.updated && (
+          <>
+            <span aria-hidden="true">·</span>
+            <span>
+              Updated <time datetime={post.data.updated.toISOString()}>{formatDate(post.data.updated)}</time>
+            </span>
+          </>
+        )}
+        <span aria-hidden="true">·</span>
+        <span>{minutes} min read</span>
+        {post.data.draft && <span class="badge-building">Draft</span>}
+      </p>
+      <h1 class="text-4xl leading-tight font-extrabold sm:text-5xl">{post.data.title}</h1>
+      <p class="text-lg text-muted">{post.data.description}</p>
+      {post.data.tags.length > 0 && (
+        <ul class="flex flex-wrap gap-2" aria-label="Tags">
+          {post.data.tags.map((tag) => (
+            <li>
+              <a
+                href={`/blog/tags/${slugifyTag(tag)}`}
+                class="rounded-full border border-border px-3 py-1 font-mono text-xs text-muted hover:border-accent hover:text-accent"
+              >
+                #{tag}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </header>
+
+    {post.data.cover && (
+      <Image
+        src={post.data.cover}
+        alt={post.data.coverAlt ?? ''}
+        class="mx-auto mt-10 w-full max-w-5xl rounded-[var(--radius-card)] border border-border"
+        widths={[480, 800, 1200]}
+        sizes="(min-width: 1024px) 1024px, 100vw"
+        loading="eager"
+        fetchpriority="high"
+      />
+    )}
+
+    <div
+      class:list={[
+        'mx-auto mt-12 gap-12',
+        showToc ? 'max-w-5xl lg:grid lg:grid-cols-[1fr_14rem]' : 'max-w-3xl',
+      ]}
+    >
+      {showToc && (
+        <nav aria-labelledby="toc-title" class="mb-10 lg:order-2 lg:mb-0">
+          <details class="card p-5 lg:sticky lg:top-24" open>
+            <summary
+              id="toc-title"
+              class="cursor-pointer font-mono text-xs font-semibold tracking-widest text-muted uppercase"
+            >
+              On this page
+            </summary>
+            <ol class="mt-4 space-y-2 text-sm">
+              {toc.map((h) => (
+                <li class:list={[h.depth === 3 && 'pl-4']}>
+                  <a href={`#${h.slug}`} class="text-muted hover:text-accent">
+                    {h.text}
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </details>
+        </nav>
+      )}
+      <div class="prose prose-ninja prose-lg max-w-none min-w-0">
+        <Content />
+      </div>
+    </div>
+
+    <nav aria-label="More posts" class="mx-auto mt-16 grid max-w-3xl gap-4 sm:grid-cols-2">
+      {older ? (
+        <a href={`/blog/${older.id}`} class="card group p-5 hover:border-accent/60">
+          <span class="font-mono text-xs text-muted">← Previous</span>
+          <span class="mt-1 block font-display font-bold group-hover:text-accent">{older.data.title}</span>
+        </a>
+      ) : (
+        <span />
+      )}
+      {newer && (
+        <a href={`/blog/${newer.id}`} class="card group p-5 text-right hover:border-accent/60">
+          <span class="font-mono text-xs text-muted">Next →</span>
+          <span class="mt-1 block font-display font-bold group-hover:text-accent">{newer.data.title}</span>
+        </a>
+      )}
+    </nav>
+  </article>
+</BaseLayout>

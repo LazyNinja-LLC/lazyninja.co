@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroArt from '../components/HeroArt.astro';
+---
+
+<BaseLayout title="404: page not found" description="This page vanished like a ninja." noindex>
+  <section class="container-page grid items-center gap-10 py-20 lg:grid-cols-[1.2fr_1fr]">
+    <div>
+      <p class="eyebrow mb-4">Error 404</p>
+      <h1 class="text-5xl font-extrabold sm:text-7xl">
+        This page vanished<span class="text-accent">.</span>
+      </h1>
+      <p class="mt-6 max-w-lg text-lg text-muted">
+        Either it never existed, or it was so stealthy even we can't find it. The ninja responsible is
+        currently napping.
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="/" class="btn-primary">
+          Take me home
+        </a>
+        <a href="/projects" class="btn-ghost">
+          Browse projects
+        </a>
+        <a href="/blog" class="btn-ghost">
+          Read the blog
+        </a>
+      </div>
+    </div>
+    <HeroArt />
+  </section>
+</BaseLayout>

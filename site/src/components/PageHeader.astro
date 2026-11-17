@@ -1,0 +1,21 @@
+---
+export interface Props {
+  eyebrow?: string;
+  title: string;
+  lead?: string;
+}
+const { eyebrow, title, lead } = Astro.props;
+---
+
+<header class="relative overflow-hidden border-b border-border">
+  <div
+    class="bg-grid pointer-events-none absolute inset-0 [mask-image:linear-gradient(to_bottom,black,transparent)]"
+    aria-hidden="true"
+  ></div>
+  <div class="container-page relative py-16 sm:py-20">
+    {eyebrow && <p class="eyebrow mb-4">{eyebrow}</p>}
+    <h1 class="max-w-3xl text-4xl font-extrabold sm:text-6xl">{title}</h1>
+    {lead && <p class="mt-5 max-w-2xl text-lg text-muted">{lead}</p>}
+    <slot />
+  </div>
+</header>

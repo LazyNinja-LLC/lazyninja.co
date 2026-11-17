@@ -1,0 +1,150 @@
+---
+import { getEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import HeroArt from '../components/HeroArt.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import PostCard from '../components/PostCard.astro';
+import ContactCta from '../components/ContactCta.astro';
+import ProjectCard from '../components/projects/ProjectCard';
+import { SITE } from '../config/site';
+import { featuredFor } from '../lib/projects';
+import { formatDate, getPosts, getWriteups } from '../lib/content';
+
+const lazyninja = featuredFor('lazyninja', 3);
+const personal = featuredFor('personal', 3);
+const posts = (await getPosts()).slice(0, 3);
+const writeups = Object.fromEntries(
+  (await getWriteups()).map((w) => [w.data.repo.toLowerCase(), `/projects/${w.id}`]),
+);
+const now = await getEntry('now', 'now');
+---
+
+<BaseLayout>
+  <!-- Hero -->
+  <section class="relative overflow-hidden">
+    <div
+      class="bg-grid pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_top,black_30%,transparent_75%)]"
+      aria-hidden="true"
+    ></div>
+    <div class="container-page relative grid items-center gap-10 py-16 sm:py-24 lg:grid-cols-[1.25fr_1fr]">
+      <div>
+        <p class="eyebrow mb-6 flex items-center gap-2">
+          <span class="inline-block size-2 rounded-full bg-accent"></span>
+          {SITE.company} · web · AI · small tools
+        </p>
+        <h1 class="font-display text-[clamp(3.5rem,11vw,8.5rem)] leading-[0.85] font-extrabold tracking-[-0.04em]">
+          <span class="block text-transparent [-webkit-text-stroke:2px_var(--fg)]">Lazy</span>
+          <span class="block">
+            Ninja<span class="text-accent">.</span>
+          </span>
+        </h1>
+        <p class="mt-8 max-w-xl font-display text-2xl leading-snug font-semibold text-balance sm:text-3xl">
+          {SITE.tagline}
+        </p>
+        <p class="mt-4 max-w-xl text-muted">
+          LazyNinja builds websites, AI integrations and small tools that quietly take busywork off your
+          plate.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/projects" class="btn-primary">
+            See the projects <span aria-hidden="true">→</span>
+          </a>
+          <a href="/hire" class="btn-ghost">
+            Hire LazyNinja
+          </a>
+        </div>
+      </div>
+      <HeroArt />
+    </div>
+  </section>
+
+  <!-- Featured projects -->
+  <section class="container-page py-16" aria-labelledby="featured-title">
+    <SectionHeading
+      eyebrow="Featured"
+      title="Recent work"
+      id="featured-title"
+      href="/projects"
+      linkLabel="All projects"
+    />
+
+    <h3 class="mb-4 flex items-center gap-3 font-mono text-sm text-muted">
+      <span class="badge-lazyninja">LazyNinja</span> From LazyNinja LLC
+    </h3>
+    {lazyninja.length > 0 ? (
+      <ul class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {lazyninja.map((p) => (
+          <li>
+            <ProjectCard project={p} writeup={writeups[p.key]} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="card p-6 text-muted">LazyNinja projects are on their way.</p>
+    )}
+
+    {personal.length > 0 && (
+      <>
+        <h3 class="mt-12 mb-4 flex items-center gap-3 font-mono text-sm text-muted">
+          <span class="badge-personal">Personal</span> Tyler's personal projects
+        </h3>
+        <ul class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {personal.map((p) => (
+            <li>
+              <ProjectCard project={p} writeup={writeups[p.key]} />
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+  </section>
+
+  <!-- Blog + Now -->
+  <section class="container-page grid gap-12 py-16 lg:grid-cols-[2fr_1fr]">
+    <div>
+      <SectionHeading eyebrow="Writing" title="From the blog" href="/blog" linkLabel="All posts" />
+      {posts.length > 0 ? (
+        <ul class="grid gap-5 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+          {posts.map((post) => (
+            <li>
+              <PostCard post={post} />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="card p-8 text-muted">
+          <p class="font-display text-lg text-fg">First posts are brewing.</p>
+          <p class="mt-1 text-sm">
+            Subscribe via{' '}
+            <a href="/rss.xml" class="link">
+              RSS
+            </a>{' '}
+            to catch them.
+          </p>
+        </div>
+      )}
+    </div>
+
+    <aside aria-labelledby="now-title">
+      <div class="card sticky top-24 p-6">
+        <p class="eyebrow mb-3">Now</p>
+        <h2 id="now-title" class="text-2xl font-bold">
+          What's happening
+        </h2>
+        {now && (
+          <>
+            <p class="mt-3 text-muted">{now.data.summary}</p>
+            <p class="mt-4 font-mono text-xs text-muted">
+              Updated <time datetime={now.data.updated.toISOString()}>{formatDate(now.data.updated)}</time>
+            </p>
+          </>
+        )}
+        <a href="/now" class="link mt-4 inline-block text-sm font-semibold">
+          Read the /now page
+        </a>
+      </div>
+    </aside>
+  </section>
+
+  <ContactCta />
+</BaseLayout>

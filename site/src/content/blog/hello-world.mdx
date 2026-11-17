@@ -1,0 +1,50 @@
+---
+title: 'Hello, world: rebuilding lazyninja.co'
+description: 'Placeholder post that shows off the blog template: headings, code, a table of contents and a cover image.'
+date: 2026-11-17
+tags: ['meta', 'astro']
+draft: true
+cover: ../../assets/blog/hello-world-cover.webp
+coverAlt: 'Abstract LazyNinja artwork: a vermilion circle with a sleepy ninja eye slit on a dark grid.'
+---
+
+{/* TODO(Tyler): this is a sample post marked `draft: true`. It never appears in production builds. Rewrite it in your own words or delete it. */}
+
+> **Placeholder post.** Everything here is sample text that shows the blog template.
+> Replace it with a real post before setting `draft: false`.
+
+## Why rebuild?
+
+_Placeholder: a sentence or two on why the site was rebuilt._ Lorem ipsum dolor sit amet,
+consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## The stack
+
+The site is static [Astro](https://astro.build) output, plus a tiny Express API for the
+contact form, privacy-friendly analytics and live GitHub stats. If the API is down, the site
+keeps working.
+
+### Code blocks
+
+Syntax highlighting uses Shiki, with separate light and dark themes:
+
+```ts title="shared/github/filter.ts"
+export function deriveStatus(repo: { topics?: string[] }): 'shipped' | 'building' {
+  if (repo.topics?.includes('lazyninja-shipped')) return 'shipped';
+  return 'building';
+}
+```
+
+```bash
+npm run dev   # site on :4321, API on :3000
+```
+
+### Controlling projects with topics
+
+Add `lazyninja-featured`, `lazyninja-shipped`, `lazyninja-building` or `lazyninja-hide`
+to a GitHub repo and the next build picks it up.
+
+## What's next
+
+_Placeholder: what's coming next._ Ut enim ad minim veniam, quis nostrud exercitation ullamco
+laboris nisi ut aliquip ex ea commodo consequat.

@@ -1,0 +1,33 @@
+---
+import { SITE } from '../config/site';
+
+export interface Props {
+  title?: string;
+  text?: string;
+}
+const {
+  title = 'Got a project that needs a ninja?',
+  text = 'Websites, AI integrations and small tools. Tell LazyNinja what you need and you will get a straight answer.',
+} = Astro.props;
+---
+
+<section class="container-page" aria-labelledby="cta-title">
+  <div class="relative overflow-hidden rounded-[2rem] border border-accent/30 bg-surface px-6 py-14 text-center sm:px-12">
+    <div
+      class="pointer-events-none absolute -top-24 left-1/2 size-80 -translate-x-1/2 rounded-full bg-accent/20 blur-3xl"
+      aria-hidden="true"
+    ></div>
+    <h2 id="cta-title" class="relative text-3xl font-extrabold sm:text-5xl">
+      {title}
+    </h2>
+    <p class="relative mx-auto mt-4 max-w-xl text-muted">{text}</p>
+    <div class="relative mt-8 flex flex-wrap justify-center gap-3">
+      <a href="/contact" class="btn-primary">
+        Start a conversation
+      </a>
+      <a href={`mailto:${SITE.person.email}`} class="btn-ghost">
+        {SITE.person.email}
+      </a>
+    </div>
+  </div>
+</section>

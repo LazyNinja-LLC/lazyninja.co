@@ -1,0 +1,33 @@
+---
+import { getEntry, render } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import { formatDate } from '../lib/content';
+import { ogImagePath } from '../lib/seo';
+
+const now = await getEntry('now', 'now');
+if (!now) throw new Error('Missing src/content/now/now.md');
+const { Content } = await render(now);
+---
+
+<BaseLayout title="Now" description={now.data.summary} image={ogImagePath('now')}>
+  <PageHeader eyebrow="/now" title="What Tyler is up to now" lead={now.data.summary}>
+    <p class="mt-6 flex flex-wrap gap-x-2 font-mono text-xs text-muted">
+      <span>
+        Last updated <time datetime={now.data.updated.toISOString()}>{formatDate(now.data.updated)}</time>
+      </span>
+      <span aria-hidden="true">·</span>
+      <span>
+        inspired by{' '}
+        <a class="link" href="https://nownownow.com/about" rel="noopener">
+          nownownow.com
+        </a>
+      </span>
+    </p>
+  </PageHeader>
+  <section class="container-page py-12">
+    <div class="prose prose-ninja prose-lg max-w-3xl">
+      <Content />
+    </div>
+  </section>
+</BaseLayout>

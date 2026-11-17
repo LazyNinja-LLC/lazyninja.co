@@ -1,0 +1,50 @@
+---
+// Decorative hero illustration: a floating sleepy ninja, a slow shuriken and some "z"s.
+// All motion is disabled under prefers-reduced-motion (motion-safe utilities + global rule).
+---
+
+<div class="relative mx-auto aspect-square w-full max-w-[420px]" aria-hidden="true">
+  <div class="absolute inset-[8%] rounded-full bg-accent/15 blur-3xl"></div>
+  <svg viewBox="0 0 400 400" class="relative h-full w-full">
+    <g class="origin-center motion-safe:animate-spin-slow" style="transform-box: fill-box">
+      <path
+        d="M330 70l10 32 32 10-32 10-10 32-10-32-32-10 32-10z"
+        fill="none"
+        stroke="var(--accent)"
+        stroke-width="3"
+        stroke-linejoin="round"
+      ></path>
+    </g>
+    <g class="motion-safe:animate-float">
+      <rect
+        x="70"
+        y="80"
+        width="260"
+        height="260"
+        rx="72"
+        fill="#0c0e12"
+        stroke="var(--border)"
+        stroke-width="2"
+      ></rect>
+      <path d="M95 140h165l28-26 10 40-10 28-28-18H95z" fill="#ff5a36"></path>
+      <rect x="98" y="196" width="204" height="70" rx="35" fill="#ecebe6"></rect>
+      <g fill="#0c0e12" class="motion-safe:animate-blink" style="transform-origin: 200px 230px">
+        <rect x="128" y="222" width="58" height="11" rx="5.5"></rect>
+        <path d="M139 230a18 18 0 0 0 36 0z"></path>
+        <rect x="214" y="222" width="58" height="11" rx="5.5"></rect>
+        <path d="M225 230a18 18 0 0 0 36 0z"></path>
+      </g>
+    </g>
+    <g font-family="var(--font-display)" font-weight="800" fill="var(--muted)">
+      <text x="300" y="320" font-size="34" class="motion-safe:animate-float" style="animation-delay: -2s">
+        z
+      </text>
+      <text x="330" y="292" font-size="24" class="motion-safe:animate-float" style="animation-delay: -4s">
+        z
+      </text>
+      <text x="352" y="270" font-size="16" class="motion-safe:animate-float">
+        z
+      </text>
+    </g>
+  </svg>
+</div>

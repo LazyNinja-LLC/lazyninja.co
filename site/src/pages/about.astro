@@ -1,0 +1,127 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHeader from '../components/PageHeader.astro';
+import ContactCta from '../components/ContactCta.astro';
+import { SITE, SOCIALS } from '../config/site';
+import { bio, skillGroups, timeline } from '../data/about';
+import { allLanguages } from '../lib/projects';
+import { ogImagePath, personJsonLd } from '../lib/seo';
+
+// Factual and generated: languages that appear across public repos.
+const githubLanguages = allLanguages();
+const groups = [
+  ...(githubLanguages.length > 0
+    ? [{ title: 'Languages on GitHub', items: githubLanguages, placeholder: false }]
+    : []),
+  ...skillGroups,
+];
+---
+
+<BaseLayout
+  title="About"
+  description={`${SITE.person.name} is the person behind LazyNinja LLC.`}
+  image={ogImagePath('about')}
+  jsonLd={[personJsonLd()]}
+>
+  <PageHeader
+    eyebrow="About"
+    title="The person behind LazyNinja"
+    lead={`${SITE.person.name}, founder of ${SITE.company}.`}
+  >
+    <div class="mt-8 flex flex-wrap gap-3">
+      <a href="/resume.pdf" class="btn-primary" download>
+        <svg
+          viewBox="0 0 24 24"
+          class="size-4"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M12 3v12m0 0l-5-5m5 5l5-5M5 21h14" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        Download résumé
+      </a>
+      <a href={SOCIALS.githubPersonal.href} class="btn-ghost" rel="me noopener">
+        {SOCIALS.githubPersonal.label}
+      </a>
+    </div>
+  </PageHeader>
+
+  <section class="container-page grid gap-12 py-14 lg:grid-cols-[1.4fr_1fr]">
+    <div class="prose prose-ninja prose-lg max-w-none">
+      {bio.map((p) => (
+        <p>{p}</p>
+      ))}
+      <p>
+        <strong>LazyNinja</strong> is the brand and the company:{' '}
+        <a href={SOCIALS.githubOrg.href}>LazyNinja-LLC</a>
+        on GitHub. Tyler's personal experiments live on his own account,
+        <a href={SOCIALS.githubPersonal.href}>WammumTy</a>.
+      </p>
+    </div>
+    <aside class="card h-fit p-6">
+      <h2 class="eyebrow mb-4">Quick facts</h2>
+      <dl class="space-y-3 text-sm">
+        <div>
+          <dt class="text-muted">Company</dt>
+          <dd class="font-medium">{SITE.company}</dd>
+        </div>
+        <div>
+          <dt class="text-muted">Email</dt>
+          <dd>
+            <a class="link" href={`mailto:${SITE.person.email}`}>
+              {SITE.person.email}
+            </a>
+          </dd>
+        </div>
+        <div>
+          <dt class="text-muted">Location</dt>
+          <!-- TODO(Tyler): add your location (or remove this row). -->
+          <dd class="font-medium">TODO: location</dd>
+        </div>
+      </dl>
+    </aside>
+  </section>
+
+  <section class="container-page py-10" aria-labelledby="skills-title">
+    <h2 id="skills-title" class="mb-8 text-3xl font-bold">
+      Skills &amp; tools
+    </h2>
+    <ul class="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {groups.map((g) => (
+        <li class:list={['card p-6', g.placeholder && 'border-dashed']}>
+          <h3 class="font-display text-lg font-bold">{g.title}</h3>
+          <ul class="mt-4 flex flex-wrap gap-2">
+            {g.items.map((item) => (
+              <li class="rounded-md bg-surface-2 px-2.5 py-1 font-mono text-xs">{item}</li>
+            ))}
+          </ul>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="container-page py-10" aria-labelledby="timeline-title">
+    <h2 id="timeline-title" class="mb-8 text-3xl font-bold">
+      Timeline
+    </h2>
+    <ol class="relative ml-3 space-y-10 border-l border-border pl-8">
+      {timeline.map((item) => (
+        <li class="relative">
+          <span
+            class="absolute top-1.5 -left-[2.4rem] size-3 rounded-full border-2 border-accent bg-bg"
+            aria-hidden="true"
+          />
+          <p class="font-mono text-xs text-accent">{item.when}</p>
+          <h3 class="mt-1 font-display text-xl font-bold">{item.title}</h3>
+          <p class="mt-1 text-muted">{item.text}</p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <div class="pt-10">
+    <ContactCta />
+  </div>
+</BaseLayout>

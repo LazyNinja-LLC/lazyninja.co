@@ -1,0 +1,47 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import PageHeader from '../../../components/PageHeader.astro';
+import PostCard from '../../../components/PostCard.astro';
+import { getPosts, slugifyTag } from '../../../lib/content';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  const byTag = new Map<string, { label: string; posts: CollectionEntry<'blog'>[] }>();
+  for (const post of posts) {
+    for (const label of post.data.tags) {
+      const slug = slugifyTag(label);
+      const entry = byTag.get(slug) ?? { label, posts: [] };
+      entry.posts.push(post);
+      byTag.set(slug, entry);
+    }
+  }
+  return [...byTag].map(([tag, { label, posts }]) => ({ params: { tag }, props: { label, posts } }));
+}
+
+interface Props {
+  label: string;
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { label, posts } = Astro.props;
+---
+
+<BaseLayout title={`Posts tagged #${label}`} description={`LazyNinja blog posts tagged ${label}.`}>
+  <PageHeader eyebrow="Tag" title={`#${label}`} lead={`${posts.length} post${posts.length === 1 ? '' : 's'}`}>
+    <p class="mt-6 text-sm">
+      <a href="/blog" class="link">
+        ← All posts
+      </a>
+    </p>
+  </PageHeader>
+  <section class="container-page py-12">
+    <ul class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+      {posts.map((post) => (
+        <li>
+          <PostCard post={post} headingLevel="h2" />
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>

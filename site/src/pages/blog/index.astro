@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPosts, slugifyTag } from '../../lib/content';
+import { ogImagePath } from '../../lib/seo';
+
+const posts = await getPosts();
+const tags = [...new Set(posts.flatMap((p) => p.data.tags))].sort();
+---
+
+<BaseLayout
+  title="Blog"
+  description="Notes on building websites, AI integrations and small tools at LazyNinja."
+  image={ogImagePath('blog')}
+>
+  <PageHeader
+    eyebrow="Blog"
+    title="Notes from the dojo"
+    lead="Building websites, AI integrations and small tools, written down."
+  >
+    <p class="mt-6 text-sm">
+      <a href="/rss.xml" class="link">
+        Subscribe via RSS
+      </a>
+    </p>
+  </PageHeader>
+
+  <section class="container-page py-12">
+    {tags.length > 0 && (
+      <nav aria-label="Tags" class="mb-8">
+        <ul class="flex flex-wrap gap-2">
+          {tags.map((tag) => (
+            <li>
+              <a
+                href={`/blog/tags/${slugifyTag(tag)}`}
+                class="rounded-full border border-border px-3 py-1 font-mono text-xs text-muted hover:border-accent hover:text-accent"
+              >
+                #{tag}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    )}
+
+    {posts.length > 0 ? (
+      <ul class="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        {posts.map((post) => (
+          <li>
+            <PostCard post={post} headingLevel="h2" />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <div class="card p-10 text-center text-muted">
+        <p class="font-display text-xl text-fg">No posts yet. The ninja is still drafting.</p>
+        <p class="mt-2 text-sm">
+          Grab the{' '}
+          <a href="/rss.xml" class="link">
+            RSS feed
+          </a>{' '}
+          and you will know when the first one lands.
+        </p>
+      </div>
+    )}
+  </section>
+</BaseLayout>
