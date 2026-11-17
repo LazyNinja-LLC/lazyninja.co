@@ -1,0 +1,7 @@
+{
+  "$comment": "Optional per-repo overrides keyed by \"Owner/name\". Fields: title, description, image, demo, tags. Example below; delete or edit freely.",
+  "LazyNinja-LLC/lazyninja.co": {
+    "title": "lazyninja.co",
+    "description": "This site: a static Astro build with a tiny Express API for contact, analytics and GitHub stats."
+  }
+}

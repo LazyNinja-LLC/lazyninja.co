@@ -1,0 +1,65 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../../components/PageHeader.astro';
+import ProjectExplorer from '../../components/projects/ProjectExplorer';
+import { SITE, SOCIALS } from '../../config/site';
+import { allLanguages, allTags, generatedAt, projects } from '../../lib/projects';
+import { getWriteups, formatDate } from '../../lib/content';
+import { ogImagePath } from '../../lib/seo';
+
+const writeups = Object.fromEntries(
+  (await getWriteups()).map((w) => [w.data.repo.toLowerCase(), `/projects/${w.id}`]),
+);
+---
+
+<BaseLayout
+  title="Projects"
+  description="Every public project from LazyNinja LLC and Tyler's personal GitHub, synced automatically."
+  image={ogImagePath('projects')}
+>
+  <PageHeader
+    eyebrow="Projects"
+    title="Things that shipped (and things still cooking)"
+    lead="Auto-synced from GitHub. LazyNinja LLC projects come first, then Tyler's personal repos."
+  >
+    <p class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+      <a class="link" href={SOCIALS.githubOrg.href} rel="noopener">
+        {SOCIALS.githubOrg.label}
+      </a>
+      <a class="link" href={SOCIALS.githubPersonal.href} rel="noopener">
+        {SOCIALS.githubPersonal.label}
+      </a>
+      {generatedAt && (
+        <span class="font-mono text-xs text-muted">Synced {formatDate(new Date(generatedAt))}</span>
+      )}
+    </p>
+  </PageHeader>
+
+  <section class="container-page py-12">
+    {projects.length > 0 ? (
+      <ProjectExplorer
+        client:load
+        projects={projects}
+        writeups={writeups}
+        languages={allLanguages()}
+        tags={allTags()}
+        apiUrl={SITE.apiUrl}
+      />
+    ) : (
+      <div class="card p-10 text-center text-muted">
+        <p class="font-display text-xl text-fg">No projects synced yet.</p>
+        <p class="mt-2 text-sm">
+          Browse{' '}
+          <a class="link" href={SOCIALS.githubOrg.href}>
+            LazyNinja-LLC
+          </a>{' '}
+          or{' '}
+          <a class="link" href={SOCIALS.githubPersonal.href}>
+            WammumTy
+          </a>{' '}
+          on GitHub in the meantime.
+        </p>
+      </div>
+    )}
+  </section>
+</BaseLayout>
