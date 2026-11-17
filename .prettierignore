@@ -9,3 +9,5 @@ site/public/resume.pdf
 *.mdx
 *.htaccess
 .htaccess
+.lighthouse
+SPEC.md

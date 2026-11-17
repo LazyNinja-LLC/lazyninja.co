@@ -11,7 +11,6 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @theme {
-
   /* Raw brand palette */
   --color-ink-950: #08090c;
   --color-ink-900: #0c0e12;

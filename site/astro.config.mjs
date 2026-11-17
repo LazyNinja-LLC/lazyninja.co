@@ -39,7 +39,9 @@ export default defineConfig({
       options: {
         variants: [
           {
-            src: ['@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2'],
+            src: [
+              '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2',
+            ],
             weight: '200 800',
             style: 'normal',
           },

@@ -1,0 +1,86 @@
+# lazyninja.co: public_html/.htaccess
+# Source of truth: deploy/public_html.htaccess. An identical copy lives at
+# site/public/.htaccess and ships inside every build (`npm run check:htaccess`
+# verifies the two match). At build time, site/scripts/postbuild.mjs replaces
+# __CSP_SCRIPT_HASHES__ with the hashes of the inline scripts in the built HTML.
+
+Options -Indexes -MultiViews
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+
+# Let rewrites decide; don't auto-redirect /blog → /blog/ because blog/ is also a directory.
+<IfModule mod_dir.c>
+  DirectorySlash Off
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Leave AutoSSL / ACME challenges alone.
+  RewriteRule ^\.well-known/ - [L]
+
+  # Never serve other dotfiles.
+  RewriteRule (^|/)\. - [F,L]
+
+  # 1. Force HTTPS and the canonical non-www host in a single redirect.
+  RewriteCond %{HTTPS} !=on [OR]
+  RewriteCond %{HTTP_HOST} ^www\. [NC]
+  RewriteRule ^ https://lazyninja.co%{REQUEST_URI} [R=301,L,NE]
+
+  # 2. Clean URLs: /about.html → /about, /blog/index.html → /blog, /index.html → /
+  RewriteCond %{THE_REQUEST} \s/+(.*?)/?index\.html[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L,NE]
+  RewriteCond %{THE_REQUEST} \s/+(.+?)\.html[\s?] [NC]
+  RewriteRule ^ /%1 [R=301,L,NE]
+
+  # 3. No trailing slashes (Astro trailingSlash: "never"), except the root.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^(.+)/$ /$1 [R=301,L,NE]
+
+  # 4. Serve /about from about.html, /blog/post from blog/post.html.
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+)$ /$1.html [L]
+</IfModule>
+
+# Compression (LiteSpeed also compresses on its own; these cover Apache).
+<IfModule mod_brotli.c>
+  AddOutputFilterByType BROTLI_COMPRESS text/html text/css text/plain text/xml application/xml application/rss+xml application/javascript application/json image/svg+xml application/manifest+json
+</IfModule>
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/plain text/xml application/xml application/rss+xml application/javascript application/json image/svg+xml application/manifest+json
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType application/manifest+json .webmanifest
+  AddType application/rss+xml .xml
+  AddType font/woff2 .woff2
+  AddType image/avif .avif
+  AddType image/webp .webp
+</IfModule>
+
+<IfModule mod_setenvif.c>
+  # Everything under /_astro/ is content-hashed by the build.
+  SetEnvIf Request_URI "^/_astro/" HASHED_ASSET=1
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Security headers
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "DENY"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+  Header always set Cross-Origin-Opener-Policy "same-origin"
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self' __CSP_SCRIPT_HASHES__; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://api.lazyninja.co; manifest-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+
+  # Caching: short for HTML/feeds, a day for un-hashed static files, a year for hashed assets.
+  <FilesMatch "\.(html|xml|txt|webmanifest)$">
+    Header set Cache-Control "public, max-age=0, must-revalidate"
+  </FilesMatch>
+  <FilesMatch "\.(ico|png|jpe?g|gif|webp|avif|svg|pdf|woff2?|css|js)$">
+    # <FilesMatch> is applied last, so both cases live here.
+    Header set Cache-Control "public, max-age=86400" env=!HASHED_ASSET
+    Header set Cache-Control "public, max-age=31536000, immutable" env=HASHED_ASSET
+  </FilesMatch>
+</IfModule>

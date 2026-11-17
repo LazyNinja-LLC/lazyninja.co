@@ -116,7 +116,7 @@ function renderColumns(host: HTMLElement, series: { day: string; views: number; 
           ? `<text x="${x + barW / 2}" y="${top - 6}" text-anchor="middle" font-size="11" fill="var(--fg)">${nf.format(d.views)}</text>`
           : '';
       const xLabel =
-        i % labelEvery === 0 || i === series.length - 1
+        (series.length - 1 - i) % labelEvery === 0
           ? `<text x="${x + barW / 2}" y="${height - 8}" text-anchor="middle" font-size="11" fill="var(--muted)">${dayFmt.format(new Date(d.day))}</text>`
           : '';
       // Hit target is the whole slot, taller than the mark.

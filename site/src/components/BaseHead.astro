@@ -41,7 +41,7 @@ const schemas = [organizationJsonLd(), ...jsonLd];
 <Font cssVariable="--font-inter" preload />
 <Font cssVariable="--font-jetbrains" />
 <meta name="description" content={description} />
-<link rel="canonical" href={canonical} />
+{!noindex && <link rel="canonical" href={canonical} />}
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 <meta name="generator" content={Astro.generator} />
 

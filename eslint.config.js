@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/.astro/**',
       'deploy/out/**',
+      '.lighthouse/**',
       'site/src/env.d.ts',
       'api/app.js',
       'api/sync.js',
