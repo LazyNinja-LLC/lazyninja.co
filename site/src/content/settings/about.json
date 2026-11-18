@@ -1,43 +1,45 @@
 {
   "bio": [
-    "Hi, I'm Tyler, the person behind LazyNinja. (Placeholder bio: edit it at /stats → Edit site → About.)",
-    "Placeholder: a sentence or two about what you build, what you care about, and how you like to work."
+    "Hi, I'm Tyler, the person behind LazyNinja.",
+    "I build various projects that I find interesting or important to not just me but anyone. I have been involved in multiple projects and social groups in my time away from the computer. I have competed in Sparatahack 11 and my team won the best beginner hack and the Auto Owners Insurance hack."
   ],
   "skillGroups": [
     {
-      "title": "Frameworks (placeholder)",
-      "items": ["TODO: framework", "TODO: framework"],
-      "placeholder": true
+      "title": "Marketing and portfolio sites",
+      "items": [
+        "Nodejs",
+        "React.ts"
+      ],
+      "placeholder": false
     },
     {
-      "title": "Tools (placeholder)",
-      "items": ["TODO: tool", "TODO: tool"],
-      "placeholder": true
+      "title": "AI Projects",
+      "items": [
+        "Hugging Face",
+        "Ollama",
+        "Python",
+        "Markdown"
+      ],
+      "placeholder": false
     },
     {
-      "title": "AI & data (placeholder)",
-      "items": ["TODO: library or service"],
-      "placeholder": true
+      "title": "Languages",
+      "items": [
+        "Javascript",
+        "Python",
+        "Typescript",
+        "Git",
+        "C++"
+      ],
+      "placeholder": false
     }
   ],
   "timeline": [
     {
       "when": "Now",
       "title": "Building LazyNinja LLC",
-      "text": "Websites, AI integrations and small tools under the LazyNinja brand.",
+      "text": "Rebuilding the LazyNinja \"brand\" into more of just who I am as a developer than a website business. Although LazyNinja is still able to build your business a website. Its not the sole thing that LazyNInja does now.",
       "placeholder": false
-    },
-    {
-      "when": "20XX",
-      "title": "TODO(Tyler): milestone",
-      "text": "Placeholder: what happened and why it mattered.",
-      "placeholder": true
-    },
-    {
-      "when": "20XX",
-      "title": "TODO(Tyler): milestone",
-      "text": "Placeholder: what happened and why it mattered.",
-      "placeholder": true
     }
   ]
 }
