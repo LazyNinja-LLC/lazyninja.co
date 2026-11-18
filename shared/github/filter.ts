@@ -162,11 +162,12 @@ export function applyOverrides(projects: Project[], overrides: Record<string, Pr
     if (!o) return p;
     return {
       ...p,
-      title: o.title ?? p.title,
-      description: o.description ?? p.description,
-      image: o.image ?? p.image ?? null,
-      homepage: o.demo ?? p.homepage,
-      tags: o.tags ?? p.tags,
+      // Empty values mean "not overridden" (the admin form saves blank fields as "").
+      title: o.title || p.title,
+      description: o.description || p.description,
+      image: o.image || p.image || null,
+      homepage: o.demo || p.homepage,
+      tags: o.tags?.length ? o.tags : p.tags,
     };
   });
 }

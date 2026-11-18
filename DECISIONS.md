@@ -132,6 +132,31 @@ Choices the spec left open, and why. Newest context: November 2026.
 - **Dev store:** without `DB_HOST` (outside production) the API uses an in-memory store and a
   console mailer, so `npm run dev` works with zero setup. `STORE=memory` is rejected in production.
 
+## Site editor
+
+- **Edits are commits, not database rows.** `/stats` → Edit site talks to `/admin/*` on the API,
+  which commits through GitHub's Contents API with a separate fine-grained token
+  (`GITHUB_WRITE_TOKEN`, Contents + Actions on this one repo). The site stays 100% static,
+  every change goes through CI (a bad edit never deploys), and git history is the undo button.
+  The cost is ~5 minutes from save to live.
+- **Allowlisted paths only** (`api/src/lib/admin-content.ts`): posts, write-ups, now.md, the
+  three settings JSON files, project overrides, the résumé and uploaded images. Code, workflows,
+  config and `.htaccess` can't be touched through the API even with the admin token.
+- **Editable data moved to JSON** (`site/src/content/settings/{about,hire,site}.json`), validated
+  with zod when the site builds. The admin renders forms from the JSON's shape (dropdowns for
+  fixed choices like Labs status and service icon).
+- **New posts/write-ups are saved as `.md`, not `.mdx`**, so a stray `<` or `{` in prose can't
+  break the build. Existing `.mdx` files still edit fine.
+- **Uploads are checked by their bytes** (PDF/PNG/JPEG/WebP/GIF/AVIF signatures, 5 MB max) and
+  renamed to a safe slug with a timestamp. Post images go to `site/src/assets/uploads/` (optimized
+  by Astro); Labs images to `site/public/uploads/`.
+- **Body limit exception:** public routes keep the 20 KB JSON limit; `/admin` accepts up to 8 MB
+  (base64 uploads), and only after the admin token has been verified.
+- **Brute-force guard:** 20 failed admin-token attempts per IP per hour, then 429 (MySQL-backed).
+- **Stale-edit protection:** saves send the file's sha; if it changed meanwhile (e.g. an edit from
+  another tab or a direct commit), GitHub rejects it and the editor asks you to reload.
+- **Project overrides treat empty fields as "not set"**, so blank form fields keep GitHub's value.
+
 ## Deploy
 
 - **SSL comes from acme.sh** (Let's Encrypt), not cPanel AutoSSL. `/.well-known/` is served before

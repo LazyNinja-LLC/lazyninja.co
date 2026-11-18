@@ -11,11 +11,13 @@ import {
   visitorHash,
 } from './lib/analytics';
 import { checkContact } from './lib/contact-schema';
-import { hmacSha256, safeEqual } from './lib/crypto';
+import { hmacSha256 } from './lib/crypto';
 import type { GitHubCache } from './lib/github-cache';
 import { cors, errorHandler, HttpError, notFound } from './lib/http';
 import type { Mailer } from './lib/mailer';
 import { RateLimiter } from './lib/rate-limit';
+import type { RepoClient } from './lib/repo-client';
+import { adminRouter, requireAdmin } from './routes/admin';
 import type { MailStatus, Store } from './store/types';
 
 export interface AppDeps {
@@ -23,12 +25,14 @@ export interface AppDeps {
   store: Store;
   mailer: Mailer | null;
   github: GitHubCache;
+  /** GitHub client for the admin editor; null when GITHUB_WRITE_TOKEN isn't set. */
+  repo?: RepoClient | null;
   now?: () => Date;
 }
 
 const OWN_HOSTS = ['lazyninja.co', 'www.lazyninja.co'];
 
-export function createApp({ config, store, mailer, github, now = () => new Date() }: AppDeps) {
+export function createApp({ config, store, mailer, github, repo = null, now = () => new Date() }: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', config.trustProxy);
@@ -40,7 +44,9 @@ export function createApp({ config, store, mailer, github, now = () => new Date(
     }),
   );
   app.use(cors(config.allowedOrigins, { allowLocalhost: !config.isProd }));
-  app.use(express.json({ limit: '20kb' }));
+  // 20 KB JSON limit for every public route. /admin parses its own (larger) bodies after auth.
+  const smallJson = express.json({ limit: '20kb' });
+  app.use((req, res, next) => (req.path.startsWith('/admin/') ? next() : smallJson(req, res, next)));
   // sendBeacon posts text/plain (CORS-safelisted, no preflight).
   app.use(express.text({ type: 'text/plain', limit: '2kb' }));
 
@@ -148,18 +154,14 @@ export function createApp({ config, store, mailer, github, now = () => new Date(
     res.status(204).end();
   });
 
-  app.get('/stats', async (req, res) => {
-    const header = req.get('authorization') ?? '';
-    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : '';
-    if (!config.adminToken || !token || !safeEqual(token, config.adminToken)) {
-      res.set('WWW-Authenticate', 'Bearer');
-      throw new HttpError(401, 'Unauthorized');
-    }
+  app.get('/stats', requireAdmin({ config, store, now }), async (_req, res) => {
     const at = now();
     const [week, month] = await Promise.all([store.getStats(7, at), store.getStats(30, at)]);
     res.set('Cache-Control', 'no-store');
     res.json({ generatedAt: at.toISOString(), periods: [week, month] });
   });
+
+  app.use('/admin', adminRouter({ config, store, github, repo, now }));
 
   app.use(notFound);
   app.use(errorHandler({ isProd: config.isProd }));

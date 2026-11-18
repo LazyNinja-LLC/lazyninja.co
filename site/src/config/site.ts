@@ -1,21 +1,44 @@
 /**
  * Single source of truth for site metadata, navigation, socials, labs and the
- * two GitHub sources.
+ * two GitHub sources. The editable bits (tagline, description, LinkedIn, Labs) live in
+ * src/content/settings/site.json so they can be changed at /stats → Edit site.
  *
  * Identity model:
  *  - "LazyNinja" is the brand and the company (LazyNinja LLC) → GitHub org LazyNinja-LLC.
  *  - Tyler Mummaw is the person behind it → personal GitHub account WammumTy.
  * Keep the two distinct everywhere.
  */
+import { z } from 'astro/zod';
 import type { GitHubSource } from '../../../shared/github/types';
+import rawSettings from '../content/settings/site.json';
+
+const LAB_STATUSES = ['live', 'beta', 'planned', 'retired'] as const;
+export type LabStatus = (typeof LAB_STATUSES)[number];
+
+const SettingsSchema = z.object({
+  tagline: z.string().min(1),
+  description: z.string().min(1),
+  linkedin: z.string(),
+  labs: z.array(
+    z.object({
+      name: z.string().min(1),
+      description: z.string(),
+      url: z.url(),
+      status: z.enum(LAB_STATUSES),
+      /** Optional image path under /public, e.g. "/uploads/demo.png". Empty = none. */
+      image: z.string().default(''),
+    }),
+  ),
+});
+
+const settings = SettingsSchema.parse(rawSettings);
 
 export const SITE = {
   url: 'https://lazyninja.co',
   name: 'LazyNinja',
   company: 'LazyNinja LLC',
-  tagline: 'Small, sharp software, built so you can be lazy later.',
-  description:
-    'LazyNinja LLC builds small, sharp software: websites, AI integrations and tools that quietly do the busywork.',
+  tagline: settings.tagline,
+  description: settings.description,
   locale: 'en_US',
   /** The real person behind the brand. Use only on About, résumé, JSON-LD Person and contact. */
   person: {
@@ -54,11 +77,9 @@ export const SOCIALS = {
     label: 'Tyler on GitHub',
     href: 'https://github.com/WammumTy',
   },
-  // TODO(Tyler): replace with your real LinkedIn URL.
   linkedin: {
     label: 'LinkedIn',
-    href: 'https://www.linkedin.com/in/TODO-your-handle',
-    placeholder: true,
+    href: settings.linkedin,
   },
   email: {
     label: 'Email',
@@ -80,31 +101,13 @@ export const GITHUB = {
   buildingWindowDays: 60,
 };
 
-export type LabStatus = 'live' | 'beta' | 'planned' | 'retired';
-
 export interface Lab {
   name: string;
   description: string;
   url: string;
   status: LabStatus;
-  /** Optional image path under /public, e.g. "/labs/demo.png". */
-  image?: string;
+  image?: string | undefined;
 }
 
-/** Labs: live demos and experiments hosted on subdomains. Edit freely. */
-export const LABS: Lab[] = [
-  {
-    // TODO(Tyler): replace with a real demo, or delete.
-    name: 'Demo playground (placeholder)',
-    description: 'Placeholder entry. A live demo will live at demo.lazyninja.co.',
-    url: 'https://demo.lazyninja.co',
-    status: 'planned',
-  },
-  {
-    // TODO(Tyler): replace with a real experiment, or delete.
-    name: 'Labs sandbox (placeholder)',
-    description: 'Placeholder entry. Small experiments will live at labs.lazyninja.co.',
-    url: 'https://labs.lazyninja.co',
-    status: 'planned',
-  },
-];
+/** Labs: live demos and experiments hosted on subdomains (edited in settings/site.json). */
+export const LABS: Lab[] = settings.labs.map((lab) => ({ ...lab, image: lab.image || undefined }));

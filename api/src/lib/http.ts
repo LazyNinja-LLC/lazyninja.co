@@ -30,7 +30,7 @@ export function cors(
     }
     if (req.method === 'OPTIONS') {
       if (ok) {
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         res.setHeader('Access-Control-Max-Age', '86400');
       }

@@ -27,6 +27,15 @@ const EnvSchema = z
     GITHUB_SOURCES: optionalString,
     GITHUB_TOKEN: optionalString,
     GITHUB_EXCLUDE_PATTERN: optionalString,
+    GITHUB_WRITE_TOKEN: optionalString,
+    GITHUB_REPO: z.preprocess(
+      emptyToUndefined,
+      z
+        .string()
+        .regex(/^[\w.-]+\/[\w.-]+$/)
+        .default('LazyNinja-LLC/lazyninja.co'),
+    ),
+    GITHUB_BRANCH: z.preprocess(emptyToUndefined, z.string().default('main')),
     GITHUB_CACHE_MINUTES: z.preprocess(
       emptyToUndefined,
       z.coerce.number().int().min(5).max(1440).default(60),
@@ -75,6 +84,8 @@ export interface Config {
   smtp: { host?: string; port: number; user?: string; pass?: string } | null;
   mail: { to: string; from: string };
   github: { sources: GitHubSource[]; token?: string; excludePatterns: string[]; cacheMaxAgeMs: number };
+  /** Content editing (admin): commits to this repo with a write token. Null token = editing disabled. */
+  content: { repo: string; branch: string; token: string | null };
   adminToken: string | null;
   analyticsSecret: string;
   allowedOrigins: string[];
@@ -113,6 +124,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
       excludePatterns: env.GITHUB_EXCLUDE_PATTERN ? [env.GITHUB_EXCLUDE_PATTERN] : DEFAULT_EXCLUDE_PATTERNS,
       cacheMaxAgeMs: env.GITHUB_CACHE_MINUTES * 60 * 1000,
     },
+    content: { repo: env.GITHUB_REPO, branch: env.GITHUB_BRANCH, token: env.GITHUB_WRITE_TOKEN ?? null },
     adminToken: env.ADMIN_TOKEN ?? null,
     // Dev fallback only; production requires a real secret (enforced above).
     analyticsSecret: env.ANALYTICS_SALT_SECRET ?? 'dev-only-analytics-secret',

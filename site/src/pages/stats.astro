@@ -1,18 +1,28 @@
 ---
 /**
- * Private analytics dashboard. Not in the nav, noindex, disallowed in robots.txt,
- * and never tracked. Data comes from GET /stats on the API with the ADMIN_TOKEN.
+ * Private admin area: analytics (GET /stats) and the site editor (/admin/* on the API).
+ * Not in the nav, noindex, disallowed in robots.txt, never tracked. Unlocked with ADMIN_TOKEN.
  */
 import BaseLayout from '../layouts/BaseLayout.astro';
+import AdminEditor from '../components/admin/AdminEditor';
+import { SITE } from '../config/site';
 ---
 
-<BaseLayout title="Stats" description="Private analytics." noindex noTrack>
+<BaseLayout title="Admin" description="Private admin area." noindex noTrack>
   <section class="container-page py-12">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <p class="eyebrow mb-2">Private</p>
-        <h1 class="text-4xl font-extrabold">Stats</h1>
+        <h1 class="text-4xl font-extrabold">Admin</h1>
       </div>
+      <nav id="tabs" class="hidden gap-1" aria-label="Admin sections">
+        <button type="button" data-tab="stats" class="range-btn">
+          Stats
+        </button>
+        <button type="button" data-tab="edit" class="range-btn">
+          Edit site
+        </button>
+      </nav>
       <div id="controls" class="hidden items-center gap-2" role="group" aria-label="Date range">
         <button type="button" data-range="7" class="range-btn">
           Last 7 days
@@ -33,10 +43,14 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       </label>
       <p class="text-xs text-muted">Kept in this tab's session storage only.</p>
       <button class="btn-primary" type="submit">
-        Load stats
+        Unlock
       </button>
       <p id="login-error" class="text-sm text-accent" role="alert"></p>
     </form>
+
+    <div id="editor" class="mt-8 hidden">
+      <AdminEditor client:only="react" apiUrl={SITE.apiUrl} />
+    </div>
 
     <div id="dashboard" class="mt-8 hidden space-y-6">
       <div class="grid gap-4 sm:grid-cols-2">
@@ -103,7 +117,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 0.875rem;
     color: var(--muted);
   }
-  .range-btn[aria-pressed='true'] {
+  .range-btn[aria-pressed='true'],
+  [data-tab][aria-pressed='true'] {
     background: var(--accent);
     border-color: var(--accent);
     color: var(--accent-ink);
@@ -120,6 +135,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   const loginError = $('login-error');
   const dashboard = $('dashboard');
   const controls = $('controls');
+  const tabs = $('tabs');
+  const editor = $('editor');
+  let tab: 'stats' | 'edit' = location.hash === '#edit' ? 'edit' : 'stats';
+
+  function showTab(next: 'stats' | 'edit') {
+    tab = next;
+    history.replaceState(null, '', next === 'edit' ? '#edit' : location.pathname);
+    document.querySelectorAll<HTMLButtonElement>('[data-tab]').forEach((b) => {
+      b.setAttribute('aria-pressed', String(b.dataset.tab === next));
+    });
+    dashboard.classList.toggle('hidden', next !== 'stats');
+    editor.classList.toggle('hidden', next !== 'edit');
+    controls.classList.toggle('hidden', next !== 'stats');
+    controls.classList.toggle('flex', next === 'stats');
+    if (next === 'stats') draw();
+  }
   let data: StatsResponse | null = null;
   let range = 7;
 
@@ -144,9 +175,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         /* ignore */
       }
       login.classList.add('hidden');
-      dashboard.classList.remove('hidden');
-      controls.classList.replace('hidden', 'flex');
-      draw();
+      tabs.classList.replace('hidden', 'flex');
+      window.dispatchEvent(new Event('ln-admin-ready'));
+      showTab(tab);
     } catch (err) {
       login.classList.remove('hidden');
       loginError.textContent = err instanceof TypeError ? 'Could not reach the API.' : (err as Error).message;
@@ -161,6 +192,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     renderStats(data, range);
   }
 
+  document
+    .querySelectorAll<HTMLButtonElement>('[data-tab]')
+    .forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab === 'edit' ? 'edit' : 'stats')));
   login.addEventListener('submit', (e) => {
     e.preventDefault();
     load($<HTMLInputElement>('token').value.trim());

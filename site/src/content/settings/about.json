@@ -1,0 +1,44 @@
+{
+  "bio": [
+    "Hi, I'm Tyler Mummaw, the person behind LazyNinja. (Placeholder bio: edit it at /stats → Edit site → About.)",
+    "Placeholder: a sentence or two about what you build, what you care about, and how you like to work."
+  ],
+  "location": "TODO: location",
+  "skillGroups": [
+    {
+      "title": "Frameworks (placeholder)",
+      "items": ["TODO: framework", "TODO: framework"],
+      "placeholder": true
+    },
+    {
+      "title": "Tools (placeholder)",
+      "items": ["TODO: tool", "TODO: tool"],
+      "placeholder": true
+    },
+    {
+      "title": "AI & data (placeholder)",
+      "items": ["TODO: library or service"],
+      "placeholder": true
+    }
+  ],
+  "timeline": [
+    {
+      "when": "Now",
+      "title": "Building LazyNinja LLC",
+      "text": "Websites, AI integrations and small tools under the LazyNinja brand.",
+      "placeholder": false
+    },
+    {
+      "when": "20XX",
+      "title": "TODO(Tyler): milestone",
+      "text": "Placeholder: what happened and why it mattered.",
+      "placeholder": true
+    },
+    {
+      "when": "20XX",
+      "title": "TODO(Tyler): milestone",
+      "text": "Placeholder: what happened and why it mattered.",
+      "placeholder": true
+    }
+  ]
+}

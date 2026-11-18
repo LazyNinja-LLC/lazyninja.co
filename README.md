@@ -71,6 +71,12 @@ Single packages: `npm run <script> --prefix site` / `--prefix api`. Useful extra
 
 ## How to add content
 
+**Easiest: the site editor.** Go to https://lazyninja.co/stats, unlock with your `ADMIN_TOKEN`
+and click **Edit site**. You can write blog posts and project write-ups, update /now, About, Hire,
+the tagline, LinkedIn and Labs, set project overrides, replace the résumé and upload images, then
+watch the deploy go live (~5 minutes). Each save is a commit to this repo, so everything below
+still applies if you prefer editing files directly. Setup: DEPLOY.md → "Site editor".
+
 ### A new blog post
 
 Create `site/src/content/blog/my-post.mdx` (the file name becomes `/blog/my-post`):
@@ -145,13 +151,13 @@ page and the build-time fallback update with the hourly scheduled rebuild or any
 ### Now, About, Labs, Hire
 
 - **Now:** edit `site/src/content/now/now.md` and bump `updated:`. The `summary:` also appears on Home.
-- **About:** bio, skills groups and timeline in `site/src/data/about.ts`. The "Languages on
+- **About:** bio, location, skills groups and timeline in `site/src/content/settings/about.json`. The "Languages on
   GitHub" group is generated from your public repos.
-- **Labs:** the `LABS` array in `site/src/config/site.ts` (name, description, url, status,
-  optional image in `site/public/`).
-- **Hire:** services, steps and FAQ in `site/src/data/hire.ts`. Add `price: 'From $…'` to a
-  service to show pricing.
-- **Socials / nav / GitHub sources:** `site/src/config/site.ts`.
+- **Labs, tagline, description, LinkedIn:** `site/src/content/settings/site.json` (Labs images go
+  in `site/public/uploads/`).
+- **Hire:** services, steps and FAQ in `site/src/content/settings/hire.json`. Set a service's
+  `price` (e.g. `"From $…"`) to show pricing; empty hides it.
+- **Nav, GitHub sources, exclude patterns:** `site/src/config/site.ts` (code, not editable in the admin).
 
 ### Swap the résumé
 

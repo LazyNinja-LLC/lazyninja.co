@@ -76,7 +76,8 @@ Lines look like `[premium149.web-hosting.com]:21098 ssh-ed25519 AAAA…`.
 | 2.3 MySQL database `lazyjapy_site` | ✅ Done (confirm the schema import below) |
 | 2.4 `.env` on the server | To do |
 | 2.5 Cron job | ✅ Done |
-| 2.6 SSL via acme.sh | ✅ `lazyninja.co` + `www`; add `api.lazyninja.co` |
+| 2.6 SSL via acme.sh | ✅ `lazyninja.co`, `www`, `api` |
+| 2.7 Site editor token | To do: add `GITHUB_WRITE_TOKEN` |
 
 The steps below are kept as a reference for rebuilding the server.
 
@@ -137,6 +138,7 @@ MAIL_TO=tyler@lazyninja.co
 
 GITHUB_SOURCES=org:LazyNinja-LLC,user:WammumTy
 GITHUB_TOKEN=<optional: fine-grained token, public read-only>
+GITHUB_WRITE_TOKEN=<site editor token, see 2.7; empty disables editing>
 
 ADMIN_TOKEN=<openssl rand -hex 32>
 ANALYTICS_SALT_SECRET=<openssl rand -hex 32, a different value>
@@ -177,7 +179,39 @@ and the `.htaccess` serves `/.well-known/` before any redirect, so HTTP-01 chall
 HSTS is sent **without `includeSubDomains`**, so subdomains that aren't on HTTPS (e.g. `mail.`,
 `webmail.`) aren't forced onto it.
 
-### 2.7 Full deploy
+### 2.7 Site editor (`/stats` → Edit site)
+
+The admin page can edit blog posts, project write-ups, /now, About, Hire, site settings & Labs,
+project overrides, the résumé and images. Each save is a **commit to `main`**, so it goes through
+the normal CI + deploy (live in ~5 minutes; a broken edit fails CI and never ships). It needs one
+extra token, separate from `GITHUB_TOKEN`, that can write only to this repo:
+
+1. GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens →
+   Generate new token**.
+   - **Token name:** `lazyninja-admin-editor`
+   - **Expiration:** 1 year or less (the LazyNinja-LLC org rejects longer-lived tokens). Put a
+     reminder in your calendar.
+   - **Resource owner:** `LazyNinja-LLC`
+   - **Repository access:** *Only select repositories* → `lazyninja.co`
+   - **Permissions → Repository:** **Contents: Read and write**, **Actions: Read and write**
+     (Metadata: read is added automatically). Nothing else.
+2. If GitHub says the token needs approval: org settings → **Personal access tokens → Pending
+   requests** → approve.
+3. Add it to `/home/lazyjapy/api/.env` and restart:
+   ```ini
+   GITHUB_WRITE_TOKEN=github_pat_...
+   ```
+   ```sh
+   touch ~/api/tmp/restart.txt
+   ```
+4. Open https://lazyninja.co/stats, unlock with `ADMIN_TOKEN`, click **Edit site**.
+
+Safety: every `/admin` request needs `ADMIN_TOKEN` (failed attempts are rate limited), and the
+API only writes to an allowlist of content paths (`site/src/content/**`, `site/public/resume.pdf`,
+uploaded images), never code, workflows or config. Every edit is a normal commit, so it can be
+reverted in GitHub like any other change.
+
+### 2.8 Full deploy
 
 **GitHub → Actions → Deploy → Run workflow** (on `main`). Both the site and the API deploy,
 then the smoke tests run (section 5).
