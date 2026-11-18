@@ -11,3 +11,6 @@ site/public/resume.pdf
 .htaccess
 .lighthouse
 SPEC.md
+
+# Content is edited through the site editor (/stats); its formatting must never block a deploy.
+site/src/content/
