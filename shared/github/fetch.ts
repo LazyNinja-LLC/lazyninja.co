@@ -109,7 +109,12 @@ function createClient(options: FetchOptions) {
       await sleep(500 * 2 ** attempt);
       return request<T>(url, attempt + 1);
     }
-    throw new Error(`GitHub ${res.status} for ${url}`);
+    // Include GitHub's own explanation (e.g. org token policies on 403s); it never contains the token.
+    const reason = await res
+      .json()
+      .then((body: { message?: unknown }) => (typeof body.message === 'string' ? `: ${body.message}` : ''))
+      .catch(() => '');
+    throw new Error(`GitHub ${res.status} for ${url}${reason}`);
   }
 
   return {
