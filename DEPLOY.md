@@ -181,7 +181,7 @@ HSTS is sent **without `includeSubDomains`**, so subdomains that aren't on HTTPS
 
 ### 2.7 Site editor (`/stats` → Edit site)
 
-The admin page can edit blog posts, project write-ups, /now, About, Hire, site settings & Labs,
+The admin page can edit blog posts, project write-ups, home page copy, About, site settings & Labs,
 project overrides, the résumé and images. Each save is a **commit to `main`**, so it goes through
 the normal CI + deploy (live in ~5 minutes; a broken edit fails CI and never ships). It needs one
 extra token, separate from `GITHUB_TOKEN`, that can write only to this repo:

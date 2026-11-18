@@ -14,7 +14,7 @@ const { noTrack = false, ...head } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" data-theme="dark" data-api={SITE.apiUrl}>
+<html lang="en" data-theme="light" data-api={SITE.apiUrl}>
   <head>
     <BaseHead {...head} />
   </head>
@@ -30,6 +30,20 @@ const { noTrack = false, ...head } = Astro.props;
       <slot />
     </main>
     <Footer />
+    <script>
+      // Fade-up (.reveal) and unrolling scrolls (.unroll) as they come into view.
+      const io = new IntersectionObserver(
+        (entries) =>
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add('in');
+              io.unobserve(e.target);
+            }
+          }),
+        { threshold: 0.15 },
+      );
+      document.querySelectorAll('.reveal, .unroll').forEach((el) => io.observe(el));
+    </script>
     {!noTrack && <script>
       import { trackPageView } from '../lib/analytics';
       trackPageView();

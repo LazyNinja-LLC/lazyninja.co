@@ -3,7 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHeader from '../components/PageHeader.astro';
 import ContactCta from '../components/ContactCta.astro';
 import { SITE, SOCIALS } from '../config/site';
-import { bio, location, skillGroups, timeline } from '../data/about';
+import { bio, skillGroups, timeline } from '../data/about';
 import { allLanguages } from '../lib/projects';
 import { ogImagePath, personJsonLd } from '../lib/seo';
 
@@ -56,7 +56,7 @@ const groups = [
       <p>
         <strong>LazyNinja</strong> is the brand and the company:{' '}
         <a href={SOCIALS.githubOrg.href}>LazyNinja-LLC</a>
-        on GitHub. Tyler's personal experiments live on his own account,
+        on GitHub. My personal experiments live on my own account,
         <a href={SOCIALS.githubPersonal.href}>WammumTy</a>.
       </p>
     </div>
@@ -74,10 +74,6 @@ const groups = [
               {SITE.person.email}
             </a>
           </dd>
-        </div>
-        <div>
-          <dt class="text-muted">Location</dt>
-          <dd class="font-medium">{location}</dd>
         </div>
       </dl>
     </aside>

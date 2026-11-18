@@ -1,0 +1,17 @@
+---
+/** Editable headline lines: one per line, the last one in italics (<em>). */
+interface Props {
+  lines: string[];
+}
+const { lines } = Astro.props;
+const lead = lines.slice(0, -1);
+const last = lines.at(-1) ?? '';
+---
+
+{lead.map((line) => (
+  <>
+    {line}
+    <br />
+  </>
+))}
+<em>{last}</em>

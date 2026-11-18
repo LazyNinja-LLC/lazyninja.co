@@ -7,30 +7,27 @@ type Obj = { [k: string]: Json };
 
 /** Fixed choices for some keys (validated again at build time). */
 const CHOICES: Record<string, string[]> = {
-  icon: ['web', 'ai', 'tools'],
   status: ['live', 'beta', 'planned', 'retired'],
 };
 /** Keys whose strings get a multi-line box. */
-const LONG = new Set(['bio', 'text', 'a', 'summary', 'description', 'bullets']);
+const LONG = new Set(['bio', 'text', 'summary', 'description', 'lead', 'lede', 'nightLede']);
 /** Shapes for new items in lists of objects (used when a list is empty). */
 const TEMPLATES: Record<string, Obj> = {
   labs: { name: '', description: '', url: 'https://', status: 'planned', image: '' },
-  services: { title: '', summary: '', bullets: [], icon: 'web', price: '' },
-  steps: { title: '', text: '' },
-  faq: { q: '', a: '' },
   skillGroups: { title: '', items: [], placeholder: false },
   timeline: { when: '', title: '', text: '', placeholder: false },
 };
 const LABELS: Record<string, string> = {
-  faq: 'FAQ',
-  q: 'Question',
-  a: 'Answer',
   skillGroups: 'Skill groups',
   linkedin: 'LinkedIn URL',
   coverAlt: 'Cover alt text',
   placeholder: 'Placeholder (dashed style)',
-  price: 'Price (empty = hidden)',
   image: 'Image (empty = none)',
+  hero: 'Hero',
+  about: 'About teaser',
+  contact: 'Contact band',
+  lede: 'Intro',
+  nightLede: 'Night intro',
 };
 
 function label(key: string): string {
@@ -120,7 +117,7 @@ export default function JsonForm({ api, path, title, intro, keyed, onCommitted }
                           setValue(Object.fromEntries(Object.entries(value).filter(([kk]) => kk !== k))),
                       }
                     : {})}
-                  heading={keyed ? k : undefined}
+                  heading={keyed ? k : v && typeof v === 'object' && !Array.isArray(v) ? label(k) : undefined}
                 />
               ))}
             {keyed ? (
@@ -257,7 +254,9 @@ function Node({
       >
         {heading ? (
           <div className="flex items-center justify-between">
-            <span className="font-mono text-sm font-semibold">{heading}</span>
+            <span className={onRemove ? 'font-mono text-sm font-semibold' : 'font-display text-lg font-bold'}>
+              {heading}
+            </span>
             {onRemove ? (
               <button type="button" className="text-xs text-muted hover:text-accent" onClick={onRemove}>
                 Remove
@@ -283,7 +282,7 @@ function Node({
   }
 
   // Leaves
-  const isItem = name === 'bio' || name === 'item' || name === 'bullet' || name === 'tag';
+  const isItem = name === 'bio' || name === 'item' || name === 'tag' || name.endsWith('Line');
   const control =
     typeof value === 'boolean' ? (
       <input
@@ -352,7 +351,6 @@ function Node({
 
 function singular(name: string): string {
   const n = name.toLowerCase();
-  if (n === 'faq') return 'question';
   if (n === 'bio') return 'bio';
   if (n === 'skill groups' || n === 'skillgroups') return 'skill group';
   if (n === 'timeline') return 'timeline entry';

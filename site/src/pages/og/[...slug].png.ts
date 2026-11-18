@@ -21,8 +21,6 @@ export const getStaticPaths = (async () => {
     projects: { title: 'Projects', kicker: 'LazyNinja + personal, synced from GitHub' },
     blog: { title: 'Notes from the dojo', kicker: 'Blog' },
     about: { title: 'The person behind LazyNinja', kicker: 'About' },
-    now: { title: 'What Tyler is up to now', kicker: '/now' },
-    hire: { title: 'Let the ninja do the busywork', kicker: `Hire ${SITE.company}` },
     contact: { title: 'Say hi', kicker: 'Contact' },
     labs: { title: 'Demos & experiments', kicker: 'Labs' },
   };

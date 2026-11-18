@@ -3,7 +3,7 @@
 The website of **LazyNinja LLC**: a static Astro site plus a small Express API.
 
 - **LazyNinja** is the brand and the company. GitHub org: [LazyNinja-LLC](https://github.com/LazyNinja-LLC).
-- **Tyler Mummaw** is the person behind it. Personal GitHub: [WammumTy](https://github.com/WammumTy).
+- **Tyler** is the person behind it. Personal GitHub: [WammumTy](https://github.com/WammumTy).
   His name appears only on About, the résumé, the JSON-LD `Person` and contact details.
 
 ```
@@ -72,7 +72,7 @@ Single packages: `npm run <script> --prefix site` / `--prefix api`. Useful extra
 ## How to add content
 
 **Easiest: the site editor.** Go to https://lazyninja.co/stats, unlock with your `ADMIN_TOKEN`
-and click **Edit site**. You can write blog posts and project write-ups, update /now, About, Hire,
+and click **Edit site**. You can write blog posts and project write-ups, update the home page copy, About,
 the tagline, LinkedIn and Labs, set project overrides, replace the résumé and upload images, then
 watch the deploy go live (~5 minutes). Each save is a commit to this repo, so everything below
 still applies if you prefer editing files directly. Setup: DEPLOY.md → "Site editor".
@@ -148,15 +148,14 @@ page and the build-time fallback update with the hourly scheduled rebuild or any
 **Custom title, description, image, demo URL or tags** for a repo:
 `site/src/content/project-overrides.json`, keyed by `"Owner/name"`.
 
-### Now, About, Labs, Hire
+### Home, About, Labs
 
-- **Now:** edit `site/src/content/now/now.md` and bump `updated:`. The `summary:` also appears on Home.
-- **About:** bio, location, skills groups and timeline in `site/src/content/settings/about.json`. The "Languages on
+- **Home:** the hero, about teaser and contact band copy (day and night versions) in
+  `site/src/content/settings/home.json`. Title lines show one per line; the last is in italics.
+- **About:** bio, skills groups and timeline in `site/src/content/settings/about.json`. The "Languages on
   GitHub" group is generated from your public repos.
 - **Labs, tagline, description, LinkedIn:** `site/src/content/settings/site.json` (Labs images go
   in `site/public/uploads/`).
-- **Hire:** services, steps and FAQ in `site/src/content/settings/hire.json`. Set a service's
-  `price` (e.g. `"From $…"`) to show pricing; empty hides it.
 - **Nav, GitHub sources, exclude patterns:** `site/src/config/site.ts` (code, not editable in the admin).
 
 ### Swap the résumé
@@ -166,6 +165,9 @@ Replace `site/public/resume.pdf` with your PDF (same file name). The About page'
 
 ### Brand assets
 
-Logo mark: `site/public/favicon.svg` (also inlined in `site/src/components/Logo.astro`).
-After changing it, run `npm run assets --prefix site` to regenerate the PNG/ICO icons.
+Logo: the 닌 brush seal in the header and footer (`site/src/components/Header.astro`).
+Favicon: `site/public/favicon.svg`; after changing it, run `npm run assets --prefix site` to
+regenerate the PNG/ICO icons.
+Korean glyphs on the home page: `glyph:` in a post's front matter, or `"glyph"` per repo in
+`site/src/content/project-overrides.json` (both editable in the site editor).
 Open Graph images are rendered per page at build time (`site/src/pages/og/[...slug].png.ts`).

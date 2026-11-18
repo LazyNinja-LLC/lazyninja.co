@@ -5,7 +5,7 @@
  *
  * Identity model:
  *  - "LazyNinja" is the brand and the company (LazyNinja LLC) → GitHub org LazyNinja-LLC.
- *  - Tyler Mummaw is the person behind it → personal GitHub account WammumTy.
+ *  - Tyler is the person behind it → personal GitHub account WammumTy.
  * Keep the two distinct everywhere.
  */
 import { z } from 'astro/zod';
@@ -42,7 +42,7 @@ export const SITE = {
   locale: 'en_US',
   /** The real person behind the brand. Use only on About, résumé, JSON-LD Person and contact. */
   person: {
-    name: 'Tyler Mummaw',
+    name: 'Tyler',
     email: 'tyler@lazyninja.co',
     jobTitle: 'Founder, LazyNinja LLC',
   },
@@ -64,8 +64,6 @@ export const NAV = [
   { href: '/blog', label: 'Blog' },
   { href: '/labs', label: 'Labs' },
   { href: '/about', label: 'About' },
-  { href: '/now', label: 'Now' },
-  { href: '/hire', label: 'Hire' },
 ] as const;
 
 export const SOCIALS = {

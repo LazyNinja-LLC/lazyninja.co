@@ -8,9 +8,8 @@ import { NoticeBar, UploadButton, type Notice } from './ui';
 const TABS = [
   ['posts', 'Blog posts'],
   ['writeups', 'Project write-ups'],
-  ['now', 'Now'],
+  ['home', 'Home'],
   ['about', 'About'],
-  ['hire', 'Hire'],
   ['site', 'Site & Labs'],
   ['projects', 'Projects'],
   ['files', 'Résumé & images'],
@@ -89,7 +88,6 @@ export default function AdminEditor({ apiUrl }: { apiUrl: string }) {
       {tab === 'writeups' ? (
         <MarkdownEditor key="writeup" api={api} kind="writeup" onCommitted={committed} />
       ) : null}
-      {tab === 'now' ? <MarkdownEditor key="now" api={api} kind="now" onCommitted={committed} /> : null}
       {tab === 'about' ? (
         <JsonForm
           key="about"
@@ -100,13 +98,13 @@ export default function AdminEditor({ apiUrl }: { apiUrl: string }) {
           onCommitted={committed}
         />
       ) : null}
-      {tab === 'hire' ? (
+      {tab === 'home' ? (
         <JsonForm
-          key="hire"
+          key="home"
           api={api}
-          path="site/src/content/settings/hire.json"
-          title="Hire page"
-          intro="Services, the how-we-work steps and the FAQ on /hire. Fill in a price to show it; leave it empty to hide it."
+          path="site/src/content/settings/home.json"
+          title="home page"
+          intro="The hero, the about teaser and the contact band on the home page. Night copy shows in dark mode. Title lines show one per line; the last line is in italics."
           onCommitted={committed}
         />
       ) : null}
@@ -138,11 +136,11 @@ export default function AdminEditor({ apiUrl }: { apiUrl: string }) {
             api={api}
             path="site/src/content/project-overrides.json"
             title="project overrides"
-            intro="Optional: show a different title, description, demo link, image or tags than GitHub has. Empty fields keep GitHub's value."
+            intro="Optional: show a different title, description, demo link, image or tags than GitHub has, or set the Korean glyph on the project's home-page scroll. Empty fields keep the default."
             keyed={{
               addLabel: '+ Add override',
               keyPlaceholder: 'Owner/name, e.g. WammumTy/Tyler.AI',
-              template: { title: '', description: '', demo: '', image: '', tags: [] },
+              template: { title: '', description: '', demo: '', image: '', tags: [], glyph: '' },
             }}
             onCommitted={committed}
           />

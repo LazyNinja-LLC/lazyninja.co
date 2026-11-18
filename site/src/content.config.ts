@@ -14,6 +14,8 @@ const blog = defineCollection({
       draft: z.boolean().default(false),
       cover: image().optional(),
       coverAlt: z.string().optional(),
+      /** 1–3 Hangul syllables for the home-page tile (brush lettering). Empty = derived from the tags. */
+      glyph: z.string().max(6).optional(),
     }),
 });
 
@@ -34,13 +36,4 @@ const projects = defineCollection({
     }),
 });
 
-/** The /now page: a single Markdown file. */
-const now = defineCollection({
-  loader: glob({ pattern: '*.md', base: './src/content/now' }),
-  schema: z.object({
-    updated: z.coerce.date(),
-    summary: z.string(),
-  }),
-});
-
-export const collections = { blog, projects, now };
+export const collections = { blog, projects };

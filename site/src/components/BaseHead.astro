@@ -37,33 +37,37 @@ const schemas = [organizationJsonLd(), ...jsonLd];
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>{fullTitle}</title>
-<Font cssVariable="--font-bricolage" preload />
+<Font cssVariable="--font-cormorant" preload={[{ weight: '500', style: 'normal' }]} />
 <Font cssVariable="--font-inter" preload />
 <Font cssVariable="--font-jetbrains" />
+<Font cssVariable="--font-dokdo" />
 <meta name="description" content={description} />
 {!noindex && <link rel="canonical" href={canonical} />}
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 <meta name="generator" content={Astro.generator} />
 
-<!-- Theme: runs before paint to avoid a flash. Dark by default, honors system + saved choice. -->
+<!-- Theme: runs before paint to avoid a flash. Saved choice, else the system setting (day by default).
+     Also marks JS as available so scroll-reveal styles only apply when they can finish. -->
 <script is:inline>
   (function () {
     const d = document.documentElement;
+    d.classList.add('js');
+    let s = null;
     try {
-      const s = localStorage.getItem('theme');
-      d.dataset.theme =
-        s === 'light' || s === 'dark'
-          ? s
-          : matchMedia('(prefers-color-scheme: light)').matches
-            ? 'light'
-            : 'dark';
+      s = localStorage.getItem('theme');
     } catch {
-      d.dataset.theme = 'dark';
+      /* storage blocked: follow the system */
     }
+    d.dataset.theme =
+      s === 'light' || s === 'dark'
+        ? s
+        : matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light';
   })();
 </script>
-<meta name="theme-color" content="#0c0e12" media="(prefers-color-scheme: dark)" />
-<meta name="theme-color" content="#f7f5f0" media="(prefers-color-scheme: light)" />
+<meta name="theme-color" content="#0b0a09" media="(prefers-color-scheme: dark)" />
+<meta name="theme-color" content="#f3ede1" media="(prefers-color-scheme: light)" />
 <meta name="color-scheme" content="dark light" />
 
 <link rel="icon" href="/favicon.ico" sizes="32x32" />

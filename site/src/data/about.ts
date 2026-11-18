@@ -8,7 +8,6 @@ import raw from '../content/settings/about.json';
 
 const AboutSchema = z.object({
   bio: z.array(z.string()),
-  location: z.string(),
   skillGroups: z.array(
     z.object({ title: z.string(), items: z.array(z.string()), placeholder: z.boolean().default(false) }),
   ),
@@ -25,4 +24,4 @@ const AboutSchema = z.object({
 export type SkillGroup = z.infer<typeof AboutSchema>['skillGroups'][number];
 export type TimelineItem = z.infer<typeof AboutSchema>['timeline'][number];
 
-export const { bio, location, skillGroups, timeline } = AboutSchema.parse(raw);
+export const { bio, skillGroups, timeline } = AboutSchema.parse(raw);

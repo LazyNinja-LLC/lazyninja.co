@@ -13,6 +13,8 @@ export default tseslint.config(
       '**/.astro/**',
       'deploy/out/**',
       '.lighthouse/**',
+      // Throwaway static design mockups, not part of the site build.
+      'design-concepts/**',
       'site/src/env.d.ts',
       'api/app.js',
       'api/sync.js',

@@ -152,6 +152,8 @@ export interface ProjectOverride {
   image?: string;
   demo?: string;
   tags?: string[];
+  /** Site only: Hangul glyph on the project's home-page scroll. Not applied to the project data. */
+  glyph?: string;
 }
 
 /** Applies `project-overrides.json` entries (keyed by `owner/name`, case-insensitive). */

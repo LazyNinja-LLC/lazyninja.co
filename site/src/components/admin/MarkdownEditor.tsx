@@ -3,7 +3,7 @@ import type { AdminApi, FileRef } from './api';
 import { joinFrontMatter, slugify, splitFrontMatter, today, type FrontMatter } from './frontmatter';
 import { Field, ListInput, NoticeBar, Toolbar, UploadButton, type Notice } from './ui';
 
-type Kind = 'post' | 'writeup' | 'now';
+type Kind = 'post' | 'writeup';
 
 type FieldSpec =
   | {
@@ -33,6 +33,12 @@ const FIELDS: Record<Kind, FieldSpec[]> = {
     { key: 'draft', label: 'Draft (hidden on the live site)', type: 'checkbox' },
     { key: 'cover', label: 'Cover image', type: 'image', hint: 'Optional. Upload an image to set it.' },
     { key: 'coverAlt', label: 'Cover description (alt text)', type: 'text' },
+    {
+      key: 'glyph',
+      label: 'Korean glyph',
+      type: 'text',
+      hint: 'Optional. 1–3 Hangul syllables shown in brush lettering on the home page tile, e.g. 지능. Empty = picked from the tags.',
+    },
   ],
   writeup: [
     { key: 'title', label: 'Title', type: 'text', required: true },
@@ -51,19 +57,9 @@ const FIELDS: Record<Kind, FieldSpec[]> = {
     { key: 'cover', label: 'Cover image', type: 'image' },
     { key: 'coverAlt', label: 'Cover description (alt text)', type: 'text' },
   ],
-  now: [
-    {
-      key: 'summary',
-      label: 'Summary',
-      type: 'textarea',
-      hint: 'Also shown in the "Now" box on the Home page.',
-      required: true,
-    },
-  ],
 };
 
 const DIRS = { post: 'site/src/content/blog', writeup: 'site/src/content/projects' } as const;
-const NOW_PATH = 'site/src/content/now/now.md';
 
 const TEMPLATES: Record<Kind, () => { data: FrontMatter; body: string }> = {
   post: () => ({
@@ -74,7 +70,6 @@ const TEMPLATES: Record<Kind, () => { data: FrontMatter; body: string }> = {
     data: { title: '', description: '', repo: '', date: today(), draft: true, stack: [] },
     body: '## The problem\n\n## What I built\n\n## Screenshots\n\n## What I learned\n',
   }),
-  now: () => ({ data: { updated: today(), summary: '' }, body: '' }),
 };
 
 interface Open {
@@ -102,7 +97,6 @@ export default function MarkdownEditor({
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   const refreshList = useCallback(async () => {
-    if (kind === 'now') return;
     try {
       const all = await api.files();
       setFiles(kind === 'post' ? all.posts : all.writeups);
@@ -137,9 +131,8 @@ export default function MarkdownEditor({
 
   useEffect(() => {
     setOpen(null);
-    if (kind === 'now') load(NOW_PATH);
-    else refreshList();
-  }, [kind, load, refreshList]);
+    refreshList();
+  }, [kind, refreshList]);
 
   function startNew() {
     const t = TEMPLATES[kind]();
@@ -180,9 +173,9 @@ export default function MarkdownEditor({
         return;
       }
       // Plain Markdown: unlike MDX, a stray < or { in prose can never break the build.
-      path = `${DIRS[kind as 'post' | 'writeup']}/${slug}.md`;
+      path = `${DIRS[kind]}/${slug}.md`;
     }
-    const data = kind === 'now' ? { ...open.data, updated: today() } : open.data;
+    const data = open.data;
     setBusy(true);
     setNotice({ kind: 'info', text: 'Saving…' });
     try {
@@ -228,37 +221,31 @@ export default function MarkdownEditor({
   const urlBase = kind === 'post' ? '/blog/' : '/projects/';
 
   return (
-    <div className={kind === 'now' ? 'space-y-5' : 'grid gap-6 lg:grid-cols-[16rem_1fr]'}>
-      {kind !== 'now' ? (
-        <aside className="space-y-3">
-          <button type="button" className="btn-primary w-full" onClick={startNew}>
-            + New {kind === 'post' ? 'post' : 'write-up'}
-          </button>
-          <ul className="card divide-y divide-border text-sm">
-            {files.length === 0 ? <li className="p-3 text-muted">Nothing yet.</li> : null}
-            {files.map((f) => (
-              <li key={f.path}>
-                <button
-                  type="button"
-                  onClick={() => load(f.path)}
-                  className={`block w-full truncate px-3 py-2 text-left font-mono hover:text-accent ${open?.path === f.path ? 'text-accent' : ''}`}
-                >
-                  {f.name}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </aside>
-      ) : null}
+    <div className="grid gap-6 lg:grid-cols-[16rem_1fr]">
+      <aside className="space-y-3">
+        <button type="button" className="btn-primary w-full" onClick={startNew}>
+          + New {kind === 'post' ? 'post' : 'write-up'}
+        </button>
+        <ul className="card divide-y divide-border text-sm">
+          {files.length === 0 ? <li className="p-3 text-muted">Nothing yet.</li> : null}
+          {files.map((f) => (
+            <li key={f.path}>
+              <button
+                type="button"
+                onClick={() => load(f.path)}
+                className={`block w-full truncate px-3 py-2 text-left font-mono hover:text-accent ${open?.path === f.path ? 'text-accent' : ''}`}
+              >
+                {f.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </aside>
 
       <div className="space-y-5">
         <NoticeBar notice={notice} />
         {!open ? (
-          kind !== 'now' ? (
-            <p className="text-muted">Pick a file on the left, or create a new one.</p>
-          ) : (
-            <p className="text-muted">Loading…</p>
-          )
+          <p className="text-muted">Pick a file on the left, or create a new one.</p>
         ) : (
           <div className="card space-y-5 p-5">
             {open.isNew ? (
@@ -273,15 +260,13 @@ export default function MarkdownEditor({
                   onChange={(e) => setOpen({ ...open, slug: e.target.value })}
                 />
               </Field>
-            ) : kind !== 'now' ? (
+            ) : (
               <p className="font-mono text-xs text-muted">
                 {open.path} ·{' '}
                 <a className="link" href={`${urlBase}${open.slug}`} target="_blank" rel="noopener">
                   view live
                 </a>
               </p>
-            ) : (
-              <p className="text-xs text-muted">The "last updated" date is set to today when you save.</p>
             )}
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -361,17 +346,15 @@ export default function MarkdownEditor({
               <button type="button" className="btn-primary" disabled={busy} onClick={save}>
                 {busy ? 'Saving…' : open.isNew ? 'Create & publish' : 'Save & publish'}
               </button>
-              {kind !== 'now' ? (
-                <UploadButton
-                  api={api}
-                  kind="image"
-                  accept="image/*"
-                  label="Insert image"
-                  onUploaded={(ref) => insertAtCursor(`\n![Describe the image](${ref})\n`)}
-                  onNotice={setNotice}
-                />
-              ) : null}
-              {!open.isNew && kind !== 'now' ? (
+              <UploadButton
+                api={api}
+                kind="image"
+                accept="image/*"
+                label="Insert image"
+                onUploaded={(ref) => insertAtCursor(`\n![Describe the image](${ref})\n`)}
+                onNotice={setNotice}
+              />
+              {!open.isNew ? (
                 <button
                   type="button"
                   className="ml-auto text-sm text-muted hover:text-accent"

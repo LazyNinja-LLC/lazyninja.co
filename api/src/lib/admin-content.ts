@@ -10,8 +10,7 @@ const SLUG = '[a-z0-9][a-z0-9-]{0,80}';
 export const TEXT_PATHS: RegExp[] = [
   new RegExp(`^site/src/content/blog/${SLUG}\\.mdx?$`),
   new RegExp(`^site/src/content/projects/${SLUG}\\.mdx?$`),
-  /^site\/src\/content\/now\/now\.md$/,
-  /^site\/src\/content\/settings\/(about|hire|site)\.json$/,
+  /^site\/src\/content\/settings\/(about|home|site)\.json$/,
   /^site\/src\/content\/project-overrides\.json$/,
 ];
 

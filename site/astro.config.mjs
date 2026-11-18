@@ -4,7 +4,44 @@ import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 import sitemap from '@astrojs/sitemap';
 import tailwindcss from '@tailwindcss/vite';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+
+/**
+ * East Sea Dokdo (Korean brush lettering) ships as ~90 unicode-range slices. Read them from the
+ * Fontsource CSS so each page only downloads the slices for the Hangul it actually shows.
+ * Self-hosted, so the CSP's font-src 'self' still holds.
+ */
+/** @typedef {{ src: [string], weight: string, style: 'normal' | 'italic', unicodeRange?: [string, ...string[]] }} FontVariant */
+
+/** @returns {[FontVariant, ...FontVariant[]]} */
+function brushFontVariants() {
+  const pkg = '@fontsource/east-sea-dokdo';
+  const css = readFileSync(fileURLToPath(new URL(`./node_modules/${pkg}/400.css`, import.meta.url)), 'utf8');
+  /** @type {FontVariant[]} */
+  const variants = [
+    ...css.matchAll(/url\(\.\/files\/([^)]+\.woff2)\)[\s\S]*?unicode-range:\s*([^;]+);/g),
+  ].map(([, file = '', range = '']) => ({
+    src: [`${pkg}/files/${file}`],
+    weight: '400',
+    style: 'normal',
+    unicodeRange: /** @type {[string, ...string[]]} */ (range.split(',').map((r) => r.trim())),
+  }));
+  const [first, ...rest] = variants;
+  if (!first) throw new Error(`No font slices found in ${pkg}/400.css`);
+  return [first, ...rest];
+}
+
+/**
+ * @param {500 | 600} weight
+ * @param {'normal' | 'italic'} style
+ * @returns {FontVariant}
+ */
+const cormorant = (weight, style) => ({
+  src: [`@fontsource/cormorant-garamond/files/cormorant-garamond-latin-${weight}-${style}.woff2`],
+  weight: String(weight),
+  style,
+});
 
 // Clean URLs: /about → about.html. Must match the rewrite rules in public/.htaccess.
 export default defineConfig({
@@ -33,20 +70,24 @@ export default defineConfig({
     },
     {
       provider: fontProviders.local(),
-      name: 'Bricolage Grotesque',
-      cssVariable: '--font-bricolage',
-      fallbacks: ['ui-sans-serif', 'system-ui', 'sans-serif'],
+      name: 'Cormorant Garamond',
+      cssVariable: '--font-cormorant',
+      fallbacks: ['Georgia', 'serif'],
       options: {
         variants: [
-          {
-            src: [
-              '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2',
-            ],
-            weight: '200 800',
-            style: 'normal',
-          },
+          cormorant(500, 'normal'),
+          cormorant(600, 'normal'),
+          cormorant(500, 'italic'),
+          cormorant(600, 'italic'),
         ],
       },
+    },
+    {
+      provider: fontProviders.local(),
+      name: 'East Sea Dokdo',
+      cssVariable: '--font-dokdo',
+      fallbacks: ['serif'],
+      options: { variants: brushFontVariants() },
     },
     {
       provider: fontProviders.local(),

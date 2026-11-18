@@ -1,0 +1,256 @@
+---
+/**
+ * Ink-wash hero: mountains with a pagoda, a blossom branch, falling petals (day) or rising lanterns
+ * (night), and the hanging scroll in front of the sun / moon. Copy swaps between day and night and
+ * comes from settings/home.json (Edit site → Home).
+ */
+import { SITE } from '../../config/site';
+import { home } from '../../data/home';
+import TitleLines from './TitleLines.astro';
+
+const { hero } = home;
+
+const stars = [
+  [120, 90, 1],
+  [300, 160, 0.8],
+  [520, 70, 1.1],
+  [760, 140, 0.7],
+  [880, 60, 1],
+  [210, 260, 0.7],
+  [1320, 300, 0.9],
+  [980, 230, 0.6],
+  [60, 340, 0.8],
+  [640, 250, 0.6],
+  [1400, 80, 1],
+  [420, 320, 0.7],
+  [1100, 40, 0.8],
+];
+const flowers = [
+  [268, 80],
+  [292, 148],
+  [258, 176],
+  [196, 122],
+  [150, 172],
+  [96, 140],
+  [62, 250],
+  [340, 44],
+];
+---
+
+<header class="hero">
+  <svg class="stars only-dark" viewBox="0 0 1440 600" preserveAspectRatio="none" aria-hidden="true">
+    <g fill="#fff" opacity=".55">
+      {stars.map(([cx, cy, r]) => (
+        <circle cx={cx} cy={cy} r={r} />
+      ))}
+    </g>
+  </svg>
+
+  <div class="mountains" aria-hidden="true">
+    <svg viewBox="0 0 1440 420" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="ink1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style="stop-color:var(--mtn);stop-opacity:var(--m1)"></stop>
+          <stop offset="1" stop-opacity="0" style="stop-color:var(--mtn)"></stop>
+        </linearGradient>
+        <linearGradient id="ink2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style="stop-color:var(--mtn);stop-opacity:var(--m2)"></stop>
+          <stop offset=".8" stop-opacity=".03" style="stop-color:var(--mtn)"></stop>
+        </linearGradient>
+        <linearGradient id="ink3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style="stop-color:var(--mtn);stop-opacity:var(--m3)"></stop>
+          <stop offset=".55" style="stop-color:var(--mtn);stop-opacity:var(--m3b)"></stop>
+          <stop offset="1" stop-opacity="0" style="stop-color:var(--mtn)"></stop>
+        </linearGradient>
+        <filter id="soft">
+          <feGaussianBlur stdDeviation="3"></feGaussianBlur>
+        </filter>
+        <filter id="softer">
+          <feGaussianBlur stdDeviation="6"></feGaussianBlur>
+        </filter>
+      </defs>
+      <g data-depth=".22">
+        <path
+          filter="url(#softer)"
+          fill="url(#ink1)"
+          d="M0 260 C 90 200, 160 120, 230 150 S 330 90, 400 130 S 520 40, 600 120 S 760 170, 840 110 S 980 30, 1060 120 S 1220 160, 1300 100 S 1410 140, 1440 160 V420 H0Z"
+        ></path>
+      </g>
+      <g data-depth=".12">
+        <path
+          filter="url(#soft)"
+          fill="url(#ink2)"
+          d="M0 320 C 120 280, 180 200, 280 230 S 420 300, 520 240 S 640 160, 720 220 S 860 290, 960 230 S 1100 170, 1200 240 S 1360 290, 1440 260 V420 H0Z"
+        ></path>
+        <g transform="translate(655 196) scale(.8)" style="fill:var(--pagoda)">
+          <rect x="-18" y="-14" width="36" height="14"></rect>
+          <path d="M-36 -13 Q-22 -16 -17 -23 H17 Q22 -16 36 -13 Z"></path>
+          <rect x="-13" y="-35" width="26" height="12"></rect>
+          <path d="M-29 -34 Q-17 -37 -12 -44 H12 Q17 -37 29 -34 Z"></path>
+          <rect x="-9" y="-55" width="18" height="11"></rect>
+          <path d="M-22 -54 Q-12 -57 -8 -63 H8 Q12 -57 22 -54 Z"></path>
+          <rect x="-1" y="-76" width="2" height="14"></rect>
+          <rect x="-4" y="-10" width="8" height="7" style="fill:var(--window)"></rect>
+          <rect x="-3" y="-31" width="6" height="5" style="fill:var(--window)"></rect>
+        </g>
+      </g>
+      <g data-depth="0">
+        <path
+          fill="url(#ink3)"
+          d="M0 380 C 160 350, 260 300, 380 340 S 560 390, 700 350 S 900 300, 1040 350 S 1260 380, 1440 340 V420 H0Z"
+        ></path>
+      </g>
+    </svg>
+  </div>
+
+  <svg class="branch" viewBox="0 0 420 300" aria-hidden="true">
+    <defs>
+      <g id="blossom">
+        <g style="fill:var(--petal)">
+          {[0, 72, 144, 216, 288].map((deg) => (
+            <ellipse cx="0" cy="-7" rx="5" ry="7.5" transform={`rotate(${deg})`} />
+          ))}
+        </g>
+        <circle r="2.6" style="fill:var(--accent)"></circle>
+      </g>
+    </defs>
+    <g fill="none" stroke-linecap="round">
+      <path
+        class="limb"
+        stroke-width="7"
+        d="M430 30 C 360 50, 320 40, 270 80 S 190 120, 150 170 S 100 230, 60 250"
+      ></path>
+      <path class="limb" stroke-width="4" d="M300 62 C 290 100, 300 120, 290 150"></path>
+      <path class="limb" stroke-width="3.5" d="M200 128 C 230 140, 240 165, 260 175"></path>
+      <path class="limb" stroke-width="3" d="M120 200 C 120 170, 100 160, 96 140"></path>
+    </g>
+    {flowers.map(([x, y]) => (
+      <use href="#blossom" x={x} y={y} />
+    ))}
+    <g style="fill:var(--petal)">
+      <circle cx="230" cy="105" r="3.5"></circle>
+      <circle cx="122" cy="214" r="3"></circle>
+      <circle cx="310" cy="110" r="3"></circle>
+    </g>
+  </svg>
+
+  <div class="fx" aria-hidden="true">
+    <div class="petals"></div>
+    <div class="lanterns"></div>
+  </div>
+
+  <div class="container-page hero-grid">
+    <div>
+      <p class="smallcaps reveal swap">
+        <span class="day">{hero.kicker}</span>
+        <span class="night">{hero.nightKicker}</span>
+      </p>
+      <h1 class="reveal d1 swap">
+        <span class="day">
+          <TitleLines lines={hero.titleLines} />
+        </span>
+        <span class="night">
+          <TitleLines lines={hero.nightTitleLines} />
+        </span>
+      </h1>
+      <p class="lede reveal d2 swap">
+        <span class="day">{hero.lede || SITE.description}</span>
+        <span class="night">{hero.nightLede || hero.lede || SITE.description}</span>
+      </p>
+      <div class="actions reveal d3">
+        <a class="seal-btn" href="/contact?reason=hire">
+          {hero.primaryButton}
+        </a>
+        <a class="ink-link" href="#work">
+          {hero.secondaryButton}
+        </a>
+      </div>
+    </div>
+
+    <div class="scroll-stage" aria-hidden="true">
+      <div class="orb"></div>
+      <div class="hscroll hero-scroll unroll">
+        <svg class="cord" viewBox="0 0 120 48">
+          <path d="M8 48 L60 6 L112 48" fill="none" stroke-width="1.5"></path>
+          <circle cx="60" cy="5" r="4" fill="#a8873e"></circle>
+        </svg>
+        <div class="rod"></div>
+        <div class="unfurl">
+          <div class="sheet">
+            <div class="sheet-in">
+              <span class="callig swap" lang="ko">
+                <span class="day">게으른닌자</span>
+                <span class="night">야간수련</span>
+              </span>
+              <span class="side">{SITE.company}</span>
+              <span class="seal" lang="ko">
+                닌<br />자
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="rod"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Petals by day, sky lanterns by night (CSS shows one or the other), and slow mountain parallax.
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const petals = document.querySelector('.hero .petals');
+  const lanterns = document.querySelector('.hero .lanterns');
+
+  if (petals && !reduce) {
+    for (let i = 0; i < 14; i++) {
+      const p = document.createElement('span');
+      p.className = 'petal';
+      p.style.right = `${30 + Math.random() * 420}px`;
+      p.style.animationDuration = `${11 + Math.random() * 10}s`;
+      p.style.animationDelay = `${-Math.random() * 20}s`;
+      p.style.scale = String(0.6 + Math.random() * 0.7);
+      petals.appendChild(p);
+    }
+  }
+  if (lanterns) {
+    const spots: [number, number, number, number][] = [
+      [8, 46, 0, 1],
+      [19, 38, -12, 0.8],
+      [33, 54, -30, 1.1],
+      [47, 42, -6, 0.7],
+      [60, 50, -22, 0.9],
+      [72, 40, -36, 1],
+      [84, 58, -16, 0.8],
+      [93, 44, -28, 0.65],
+    ];
+    for (const [left, duration, delay, size] of spots) {
+      const l = document.createElement('span');
+      l.className = 'lantern';
+      l.style.left = `${left}%`;
+      l.style.animationDuration = `${duration}s`;
+      l.style.animationDelay = `${delay}s`;
+      l.style.scale = String(size);
+      if (reduce) l.style.bottom = `${25 + Math.random() * 45}%`;
+      lanterns.appendChild(l);
+    }
+  }
+
+  const layers = [...document.querySelectorAll<SVGGElement>('.hero [data-depth]')];
+  if (layers.length && !reduce) {
+    let ticking = false;
+    const move = () => {
+      ticking = false;
+      for (const l of layers) l.style.transform = `translateY(${scrollY * Number(l.dataset.depth)}px)`;
+    };
+    addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(move);
+        }
+      },
+      { passive: true },
+    );
+  }
+</script>

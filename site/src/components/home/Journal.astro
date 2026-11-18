@@ -1,0 +1,277 @@
+---
+/**
+ * "From the journal": the latest four posts as tiles. Clicking a tile flips it out into a large
+ * centred card (a <dialog>) whose back is the full post, rendered here into a <template>.
+ * Each tile shows a Korean brush glyph (front matter `glyph`, else picked from the tags) and,
+ * when the post has a cover, the image under it.
+ */
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import { formatDate, getPosts, readingTime } from '../../lib/content';
+import { postGlyph } from '../../lib/glyphs';
+
+const posts = (await getPosts()).slice(0, 4);
+
+// Bento spans by how many posts exist (6-column grid).
+const layouts: Record<number, string[]> = {
+  1: ['span-6 short'],
+  2: ['span-4 big', 'span-2'],
+  3: ['span-4 big', 'span-2', 'span-6 short'],
+  4: ['span-4 big', 'span-2', 'span-3', 'span-3'],
+};
+const spans = layouts[posts.length] ?? [];
+
+const tiles = await Promise.all(
+  posts.map(async (post, i) => {
+    const { Content } = await render(post);
+    return {
+      post,
+      Content,
+      id: `post-${post.id.replace(/[^a-z0-9-]/gi, '-')}`,
+      glyph: postGlyph(post.data),
+      label: post.data.tags[0] ?? 'Journal',
+      minutes: readingTime(post.body),
+      span: spans[i] ?? 'span-3',
+    };
+  }),
+);
+---
+
+<section id="journal" class="home-section" aria-labelledby="journal-title">
+  <div class="container-page">
+    <div class="section-head">
+      <div>
+        <p class="kicker reveal">From the journal</p>
+        <h2 id="journal-title" class="headline reveal d1">
+          Notes from
+          <br />
+          <span class="soft">the training floor.</span>
+        </h2>
+      </div>
+      <a class="see-all reveal" href="/blog">
+        All posts
+      </a>
+    </div>
+
+    <div class="journal-grid">
+      {tiles.length === 0 && (
+        <a class="post post-empty reveal" href="/blog">
+          <span class="char" aria-hidden="true" lang="ko">
+            글
+          </span>
+          <h3>First posts are brewing.</h3>
+          <p>Follow along on the blog or subscribe to the RSS feed.</p>
+        </a>
+      )}
+      {tiles.map(({ post, id, glyph, label, span }, i) => (
+        <article
+          class:list={['post reveal', span, { 'has-img': post.data.cover, d1: i % 2 === 1 }]}
+          data-post={id}
+        >
+          <button
+            class="post-open"
+            type="button"
+            aria-haspopup="dialog"
+            aria-label={`Read: ${post.data.title}`}
+          ></button>
+          <div class="post-meta">
+            <span>{label}</span>
+            <span class="dot"></span>
+            <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+            {post.data.draft && <span class="sample">Draft</span>}
+          </div>
+          <span class="char" aria-hidden="true" lang="ko">
+            {glyph}
+          </span>
+          {post.data.cover && (
+            <div class="cover">
+              <Image
+                src={post.data.cover}
+                alt={post.data.coverAlt ?? ''}
+                widths={[480, 800, 1200]}
+                sizes="(max-width: 960px) 90vw, 760px"
+                loading="lazy"
+              />
+            </div>
+          )}
+          <div class="bottom">
+            <h3>{post.data.title}</h3>
+            <span class="hint">
+              <svg
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.6"
+                aria-hidden="true"
+              >
+                <path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v2.5h-2.5"></path>
+              </svg>
+              Flip to read
+            </span>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+{tiles.length > 0 && (
+  <>
+    <dialog class="reader">
+      <div class="rc-inner">
+        <div class="rc-face rc-front" aria-hidden="true"></div>
+        <div class="rc-face rc-back">
+          <div class="reader-scroll">
+            <div class="reader-bar">
+              <span class="crumb">
+                <span class="chop" aria-hidden="true" lang="ko">
+                  닌
+                </span>
+                The journal
+              </span>
+              <button class="reader-close" type="button" aria-label="Close post">
+                ×
+              </button>
+            </div>
+            <div class="reader-body"></div>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    {tiles.map(({ post, Content, id, glyph, label, minutes }) => (
+      <template id={id}>
+        <header class="reader-head">
+          <span class="char" aria-hidden="true" lang="ko">
+            {glyph}
+          </span>
+          <div class="post-meta">
+            <span>{label}</span>
+            <span class="dot"></span>
+            <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+            <span class="dot"></span>
+            <span>{minutes} min read</span>
+            {post.data.draft && <span class="sample">Draft</span>}
+          </div>
+          <h2 id={`${id}-title`}>{post.data.title}</h2>
+          <p class="dek">{post.data.description}</p>
+        </header>
+        {post.data.cover && (
+          <div class="reader-cover">
+            <Image
+              src={post.data.cover}
+              alt={post.data.coverAlt ?? ''}
+              widths={[800, 1200]}
+              sizes="(max-width: 900px) 90vw, 760px"
+            />
+          </div>
+        )}
+        <div class="reader-prose prose prose-ninja prose-lg max-w-none">
+          <Content />
+        </div>
+        <footer class="reader-foot">
+          {post.data.tags.length > 0 && (
+            <ul class="chips">
+              {post.data.tags.map((t) => (
+                <li>{t}</li>
+              ))}
+            </ul>
+          )}
+          <a class="text-link" href={`/blog/${post.id}`}>
+            Open as a full page
+          </a>
+        </footer>
+      </template>
+    ))}
+  </>
+)}
+
+<script>
+  // A journal tile flips out of the grid into a big centred card whose back is the full post.
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const dialog = document.querySelector<HTMLDialogElement>('dialog.reader');
+
+  if (dialog) {
+    const inner = dialog.querySelector<HTMLElement>('.rc-inner')!;
+    const front = dialog.querySelector<HTMLElement>('.rc-front')!;
+    const body = dialog.querySelector<HTMLElement>('.reader-body')!;
+    const scroller = dialog.querySelector<HTMLElement>('.reader-scroll')!;
+    const closeButton = dialog.querySelector<HTMLButtonElement>('.reader-close')!;
+    const DURATION = 780;
+    const EASE = 'cubic-bezier(.3,.75,.2,1)';
+    let tile: HTMLElement | null = null;
+    let busy = false;
+
+    // Transform that puts the dialog exactly over the tile.
+    const overTile = (t: HTMLElement) => {
+      const from = t.getBoundingClientRect();
+      const to = dialog.getBoundingClientRect();
+      return `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${from.width / to.width}, ${from.height / to.height})`;
+    };
+
+    const open = (t: HTMLElement) => {
+      const tpl = document.getElementById(t.dataset.post ?? '') as HTMLTemplateElement | null;
+      if (!tpl || busy) return;
+      tile = t;
+      // Front face: a copy of the tile's look; back face: the post.
+      front.className = `rc-face rc-front ${[...t.classList].filter((c) => c === 'post' || c === 'big' || c === 'has-img').join(' ')}`;
+      front.replaceChildren(
+        ...[...t.children].filter((c) => !c.classList.contains('post-open')).map((c) => c.cloneNode(true)),
+      );
+      body.replaceChildren(tpl.content.cloneNode(true));
+      const title = body.querySelector('h2');
+      if (title) dialog.setAttribute('aria-labelledby', title.id);
+      dialog.showModal();
+      scroller.scrollTop = 0;
+      closeButton.focus({ preventScroll: true });
+      if (reduce) return;
+      busy = true;
+      t.style.visibility = 'hidden';
+      dialog.animate([{ transform: overTile(t) }, { transform: 'none' }], {
+        duration: DURATION,
+        easing: EASE,
+      });
+      inner.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }], {
+        duration: DURATION,
+        easing: EASE,
+      }).onfinish = () => {
+        busy = false;
+      };
+    };
+
+    const close = () => {
+      if (busy || !dialog.open) return;
+      const t = tile;
+      const done = () => {
+        dialog.close();
+        dialog.classList.remove('closing');
+        dialog.getAnimations().forEach((a) => a.cancel());
+        inner.getAnimations().forEach((a) => a.cancel());
+        if (t) {
+          t.style.visibility = '';
+          t.querySelector<HTMLButtonElement>('.post-open')?.focus({ preventScroll: true });
+        }
+        busy = false;
+      };
+      if (reduce || !t) return done();
+      busy = true;
+      dialog.classList.add('closing');
+      const options = { duration: DURATION - 120, easing: EASE, fill: 'forwards' as const };
+      dialog.animate([{ transform: 'none' }, { transform: overTile(t) }], options);
+      inner.animate([{ transform: 'rotateY(180deg)' }, { transform: 'rotateY(0deg)' }], options).onfinish =
+        done;
+    };
+
+    document
+      .querySelectorAll<HTMLElement>('.post[data-post]')
+      .forEach((t) => t.querySelector('.post-open')?.addEventListener('click', () => open(t)));
+    closeButton.addEventListener('click', close);
+    dialog.addEventListener('cancel', (e) => {
+      e.preventDefault();
+      close();
+    });
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) close();
+    });
+  }
+</script>

@@ -1,0 +1,137 @@
+---
+/**
+ * "The scroll library": up to six projects (featured first, then most recent, LazyNinja before
+ * personal) as hanging scrolls that unroll on view, plus a "See all projects" scroll.
+ * Arrows sit on the left and right and hide at either end; on phones you swipe.
+ */
+import { projects } from '../../lib/projects';
+import { getWriteups } from '../../lib/content';
+import { projectGlyph } from '../../lib/glyphs';
+
+const featured = projects.filter((p) => p.featured);
+const rest = projects.filter((p) => !p.featured && !p.archived);
+const shown = [...featured, ...rest].slice(0, 6);
+const writeups = Object.fromEntries(
+  (await getWriteups()).map((w) => [w.data.repo.toLowerCase(), `/projects/${w.id}`]),
+);
+---
+
+<section id="work" class="home-section alt" style="padding-bottom: 100px" aria-labelledby="work-title">
+  <div class="container-page section-head">
+    <div>
+      <p class="kicker reveal">Selected work</p>
+      <h2 id="work-title" class="headline reveal d1">
+        The scroll <em>library.</em>
+      </h2>
+    </div>
+  </div>
+
+  <div class="proj-rail">
+    <button class="rail-btn prev" type="button" aria-label="Previous projects" disabled>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M15 5l-7 7 7 7"></path>
+      </svg>
+    </button>
+    <button class="rail-btn next" type="button" aria-label="Next projects">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M9 5l7 7-7 7"></path>
+      </svg>
+    </button>
+
+    <ul class="proj-track" role="list">
+      {shown.map((p) => {
+        const writeup = writeups[p.key];
+        return (
+          <li class="hscroll unroll">
+            <svg class="cord" viewBox="0 0 120 48" aria-hidden="true">
+              <path d="M8 48 L60 6 L112 48" fill="none" stroke-width="1.5"></path>
+              <circle cx="60" cy="5" r="4" fill="#a8873e"></circle>
+            </svg>
+            <div class="rod"></div>
+            <div class="unfurl">
+              <a class="sheet" href={writeup ?? p.url} {...(writeup ? {} : { rel: 'noopener' })}>
+                <div class="sheet-in">
+                  <span class="glyph" aria-hidden="true" lang="ko">
+                    {projectGlyph(p)}
+                  </span>
+                  <div class="tags">
+                    <span class:list={['tag', p.source === 'lazyninja' ? 'tag-lazyninja' : 'tag-personal']}>
+                      {p.sourceLabel}
+                    </span>
+                    <span class:list={['tag', p.status === 'shipped' ? 'tag-shipped' : 'tag-building']}>
+                      {p.status === 'shipped' ? 'Shipped' : 'Building'}
+                    </span>
+                  </div>
+                  <h3>{p.title}</h3>
+                  <p class="langs">{p.languages.slice(0, 2).join(' · ') || ' '}</p>
+                  <span class="go">{writeup ? 'Read the scroll ›' : 'View on GitHub ›'}</span>
+                </div>
+              </a>
+            </div>
+            <div class="rod"></div>
+          </li>
+        );
+      })}
+      <li class="hscroll unroll all">
+        <svg class="cord" viewBox="0 0 120 48" aria-hidden="true">
+          <path d="M8 48 L60 6 L112 48" fill="none" stroke-width="1.5"></path>
+          <circle cx="60" cy="5" r="4" fill="#a8873e"></circle>
+        </svg>
+        <div class="rod"></div>
+        <div class="unfurl">
+          <a class="sheet" href="/projects">
+            <div class="sheet-in">
+              <span class="glyph" aria-hidden="true" lang="ko">
+                모두
+              </span>
+              <h3>See all projects</h3>
+              <p class="langs">LazyNinja and personal, synced from GitHub</p>
+              <span class="go">Open the library ›</span>
+            </div>
+          </a>
+        </div>
+        <div class="rod"></div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<script>
+  // Side arrows page through the scrolls and hide at either end.
+  const track = document.querySelector<HTMLElement>('.proj-track');
+  const prev = document.querySelector<HTMLButtonElement>('.rail-btn.prev');
+  const next = document.querySelector<HTMLButtonElement>('.rail-btn.next');
+  if (track && prev && next) {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const step = () => Math.max(284, Math.floor((track.clientWidth * 0.7) / 284) * 284);
+    const sync = () => {
+      prev.disabled = track.scrollLeft < 8;
+      next.disabled = track.scrollLeft + track.clientWidth >= track.scrollWidth - 8;
+    };
+    prev.addEventListener('click', () =>
+      track.scrollBy({ left: -step(), behavior: reduce ? 'auto' : 'smooth' }),
+    );
+    next.addEventListener('click', () =>
+      track.scrollBy({ left: step(), behavior: reduce ? 'auto' : 'smooth' }),
+    );
+    track.addEventListener('scroll', sync, { passive: true });
+    addEventListener('resize', sync);
+    sync();
+  }
+</script>

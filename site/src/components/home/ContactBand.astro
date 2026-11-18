@@ -1,0 +1,43 @@
+---
+/**
+ * The night contact band that closes the home page (the footer continues it).
+ * Copy comes from settings/home.json (Edit site → Home).
+ */
+import { SITE } from '../../config/site';
+import { home } from '../../data/home';
+import TitleLines from './TitleLines.astro';
+
+const { contact } = home;
+---
+
+<svg class="cta-edge" viewBox="0 0 1440 70" preserveAspectRatio="none" aria-hidden="true">
+  <path d="M0 70 L0 52 C 80 40, 140 58, 220 44 S 380 20, 470 38 S 640 60, 730 34 S 900 10, 1000 36 S 1180 58, 1260 40 S 1400 26, 1440 30 L1440 70Z"></path>
+</svg>
+<section class="cta-band" id="contact" aria-labelledby="cta-title">
+  <span class="big-glyph" aria-hidden="true" lang="ko">
+    도
+  </span>
+  <div class="container-page">
+    <p class="kick reveal swap">
+      <span class="day">{contact.kicker}</span>
+      <span class="night">{contact.nightKicker}</span>
+    </p>
+    <h2 id="cta-title" class="reveal d1 swap">
+      <span class="day">
+        <TitleLines lines={contact.titleLines} />
+      </span>
+      <span class="night">
+        <TitleLines lines={contact.nightTitleLines} />
+      </span>
+    </h2>
+    {contact.text && <p class="reveal d2">{contact.text}</p>}
+    <div class="btns reveal d3">
+      <a class="btn-night" href="/contact">
+        {contact.button}
+      </a>
+      <a class="btn-night ghost" href={`mailto:${SITE.person.email}`}>
+        {SITE.person.email}
+      </a>
+    </div>
+  </div>
+</section>

@@ -98,7 +98,7 @@ describe('admin auth', () => {
   it('checks auth before parsing large bodies', async () => {
     const res = await request(setup().app)
       .put('/admin/file')
-      .send({ path: 'site/src/content/now/now.md', content: 'x'.repeat(100_000) });
+      .send({ path: 'site/src/content/blog/hello.md', content: 'x'.repeat(100_000) });
     expect(res.status).toBe(401);
   });
 
@@ -123,16 +123,16 @@ describe('admin files', () => {
 
   it('reads and updates an allowed file, committing with the right sha', async () => {
     const { app, repo } = setup();
-    const sha = repo.seed('site/src/content/now/now.md', POST);
-    const got = await request(app).get('/admin/file?path=site/src/content/now/now.md').set(AUTH);
+    const sha = repo.seed('site/src/content/blog/hello.md', POST);
+    const got = await request(app).get('/admin/file?path=site/src/content/blog/hello.md').set(AUTH);
     expect(got.body).toMatchObject({ sha, content: POST });
     const put = await request(app)
       .put('/admin/file')
       .set(AUTH)
-      .send({ path: 'site/src/content/now/now.md', content: POST.replace('Hello', 'Hey'), sha });
+      .send({ path: 'site/src/content/blog/hello.md', content: POST.replace('Hello', 'Hey'), sha });
     expect(put.status).toBe(200);
-    expect(repo.commits.at(-1)?.message).toBe('content: update site/src/content/now/now.md (via admin)');
-    expect((await repo.getFile('site/src/content/now/now.md'))?.content).toContain('Hey');
+    expect(repo.commits.at(-1)?.message).toBe('content: update site/src/content/blog/hello.md (via admin)');
+    expect((await repo.getFile('site/src/content/blog/hello.md'))?.content).toContain('Hey');
   });
 
   it('creates new posts and rejects stale shas', async () => {

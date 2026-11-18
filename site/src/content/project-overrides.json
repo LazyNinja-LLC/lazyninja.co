@@ -1,7 +1,20 @@
 {
-  "$comment": "Optional per-repo overrides keyed by \"Owner/name\". Fields: title, description, image, demo, tags. Example below; delete or edit freely.",
+  "$comment": "Optional per-repo overrides keyed by \"Owner/name\". Fields: title, description, image, demo, tags, glyph (Korean brush glyph on the home-page scroll). Empty fields keep the default.",
   "LazyNinja-LLC/lazyninja.co": {
     "title": "lazyninja.co",
-    "description": "This site: a static Astro build with a tiny Express API for contact, analytics and GitHub stats."
+    "description": "This site: a static Astro build with a tiny Express API for contact, analytics and GitHub stats.",
+    "glyph": "도장"
+  },
+  "WammumTy/Tyler.AI": {
+    "glyph": "나"
+  },
+  "WammumTy/GenZ-LLM": {
+    "glyph": "말"
+  },
+  "WammumTy/tradingbot": {
+    "glyph": "시장"
+  },
+  "WammumTy/AIClub-Hackathon": {
+    "glyph": "대회"
   }
 }
