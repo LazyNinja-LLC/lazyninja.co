@@ -4,16 +4,9 @@
   "linkedin": "https://www.linkedin.com/in/TODO-your-handle",
   "labs": [
     {
-      "name": "Demo playground (placeholder)",
-      "description": "Placeholder entry. A live demo will live at demo.lazyninja.co.",
-      "url": "https://demo.lazyninja.co",
-      "status": "planned",
-      "image": ""
-    },
-    {
-      "name": "Labs sandbox (placeholder)",
-      "description": "Placeholder entry. Small experiments will live at labs.lazyninja.co.",
-      "url": "https://labs.lazyninja.co",
+      "name": "Coming Soon",
+      "description": "",
+      "url": "https://lazyninja.co",
       "status": "planned",
       "image": ""
     }
