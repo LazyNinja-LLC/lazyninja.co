@@ -136,8 +136,8 @@ Without a status topic, a repo counts as **Building** if pushed in the last 60 d
 course-code names (pattern in `site/src/config/site.ts` → `GITHUB.excludePatterns`, and
 `GITHUB_EXCLUDE_PATTERN` for the API) are never shown. Other topics become filterable tags.
 
-Changes show up on the next deploy (or the daily scheduled rebuild), and stars/last-updated
-refresh live via the API.
+The Projects page follows GitHub within ~15 minutes (API cache, refreshed by cron); the Home
+page and the build-time fallback update with the hourly scheduled rebuild or any deploy.
 
 **Custom title, description, image, demo URL or tags** for a repo:
 `site/src/content/project-overrides.json`, keyed by `"Owner/name"`.

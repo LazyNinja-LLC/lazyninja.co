@@ -17,7 +17,7 @@ Push to `main` → `.github/workflows/deploy.yml`:
 
 1. **Detect changes**: diffs the push. `site/**`, `deploy/**` or `shared/**` → site job.
    `api/**` or `shared/**` → API job. A manual run (**Actions → Deploy → Run workflow**) deploys
-   both. A daily scheduled run rebuilds the site so GitHub stats and new repos stay fresh.
+   both. An hourly scheduled run rebuilds the site so GitHub data on Home and new repos stay fresh.
 2. **CI** (`ci.yml`, called as a reusable workflow): lint + Prettier, `.htaccess` copy check,
    site type-check + build, API type-check + tests + build (everything on Node 22, like the server).
    Nothing deploys unless CI passes. The deploy build is _strict_: if GitHub can't be reached,
@@ -154,7 +154,7 @@ After creating `.env`, restart the app (**Setup Node.js App → Restart**), or r
 
 ### 2.5 Cron job ✅
 
-Configured as described in [`deploy/cron.md`](deploy/cron.md): every 6 hours, `npm run sync`
+Configured as described in [`deploy/cron.md`](deploy/cron.md): every 15 minutes, `npm run sync`
 (GitHub cache refresh + 13-month analytics purge). Run it once by hand after step 2.4 to fill the
 cache right away.
 

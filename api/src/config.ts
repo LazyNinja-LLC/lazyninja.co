@@ -27,6 +27,10 @@ const EnvSchema = z
     GITHUB_SOURCES: optionalString,
     GITHUB_TOKEN: optionalString,
     GITHUB_EXCLUDE_PATTERN: optionalString,
+    GITHUB_CACHE_MINUTES: z.preprocess(
+      emptyToUndefined,
+      z.coerce.number().int().min(5).max(1440).default(60),
+    ),
     ADMIN_TOKEN: optionalString,
     ANALYTICS_SALT_SECRET: optionalString,
     ALLOWED_ORIGINS: z.preprocess(
@@ -70,7 +74,7 @@ export interface Config {
   db: { host: string; port: number; user: string; password: string; database: string };
   smtp: { host?: string; port: number; user?: string; pass?: string } | null;
   mail: { to: string; from: string };
-  github: { sources: GitHubSource[]; token?: string; excludePatterns: string[] };
+  github: { sources: GitHubSource[]; token?: string; excludePatterns: string[]; cacheMaxAgeMs: number };
   adminToken: string | null;
   analyticsSecret: string;
   allowedOrigins: string[];
@@ -107,6 +111,7 @@ export function loadConfig(source: NodeJS.ProcessEnv = process.env): Config {
       sources: parseSourcesEnv(env.GITHUB_SOURCES),
       token: env.GITHUB_TOKEN,
       excludePatterns: env.GITHUB_EXCLUDE_PATTERN ? [env.GITHUB_EXCLUDE_PATTERN] : DEFAULT_EXCLUDE_PATTERNS,
+      cacheMaxAgeMs: env.GITHUB_CACHE_MINUTES * 60 * 1000,
     },
     adminToken: env.ADMIN_TOKEN ?? null,
     // Dev fallback only; production requires a real secret (enforced above).

@@ -2,7 +2,7 @@
 
 Cron is only used for data refresh. The API itself is started on demand by Passenger.
 
-## GitHub cache refresh + analytics purge (every 6 hours)
+## GitHub cache refresh + analytics purge (every 15 minutes)
 
 `npm run sync` (runs `sync.js` from the deployed API) does two things:
 
@@ -11,11 +11,11 @@ Cron is only used for data refresh. The API itself is started on demand by Passe
 2. Purges `page_views` rows older than **13 months** and expired `rate_limits` rows.
 
 This job is **already configured** in **cPanel → Cron Jobs**. For reference (or to recreate it),
-use the schedule `7 */6 * * *`:
+use the schedule `*/15 * * * *`:
 
 | Minute | Hour  | Day | Month | Weekday |
 | ------ | ----- | --- | ----- | ------- |
-| `7`    | `*/6` | `*` | `*`   | `*`     |
+| `*/15` | `*`   | `*` | `*`   | `*`     |
 
 Command (one line):
 
@@ -23,6 +23,9 @@ Command (one line):
 /bin/bash -c 'source /home/lazyjapy/nodevenv/api/22/bin/activate && cd /home/lazyjapy/api && mkdir -p logs && npm run sync >> logs/sync.log 2>&1'
 ```
 
+- Each run makes ~10 GitHub API calls (~40/hour). That needs `GITHUB_TOKEN` in `.env`: without
+  one, GitHub allows only 60 calls/hour per IP, shared with other sites on the server.
+- The purge part is cheap and idempotent, so running it every 15 minutes is harmless.
 - `source …/activate` puts the cPanel Node 22 `node`/`npm` on the PATH (they are not on the
   default PATH). The path only exists after the Node.js app is created in cPanel.
 - It reads `/home/lazyjapy/api/.env` (DB credentials, `GITHUB_SOURCES`, `GITHUB_TOKEN`).

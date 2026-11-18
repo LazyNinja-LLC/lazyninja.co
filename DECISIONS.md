@@ -87,7 +87,7 @@ Choices the spec left open, and why. Newest context: November 2026.
 - **Build-time GitHub data is not committed** (`site/src/data/github.json` is generated). Local
   builds keep the previous snapshot if GitHub is unreachable; deploys run with
   `GITHUB_FETCH_STRICT=1` and fail instead of shipping an empty Projects page.
-- **A daily scheduled deploy** rebuilds the site so build-time data (new repos, topics) stays
+- **An hourly scheduled deploy** rebuilds the site so build-time data (new repos, topics) stays
   fresh even without pushes. It only redeploys the site.
 - **Profile README repos** excluded: `<login>/<login>` and the org `.github` repo.
 - **About skills:** to avoid inventing facts, the only filled-in group is "Languages on
@@ -100,7 +100,8 @@ Choices the spec left open, and why. Newest context: November 2026.
 ## API behavior
 
 - **GitHub cache:** one row per repo in `github_repo_cache` plus `sync_state.updated_at`.
-  `GET /github/repos` never calls GitHub per request: fresh (< 6 h) cache is served as is.
+  `GET /github/repos` never calls GitHub per request: a cache younger than `GITHUB_CACHE_MINUTES`
+  (default 60) is served as is; cron refreshes it every 15 minutes.
   When stale, it serves the stale data immediately and refreshes in the background
   (deduplicated, 10-minute backoff after a failure). It blocks only when the cache is empty.
   Response includes `syncedAt` and `stale`.

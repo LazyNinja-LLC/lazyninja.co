@@ -5,8 +5,8 @@ on:
     branches: [main]
   workflow_dispatch:
   schedule:
-    # Daily site rebuild so build-time GitHub data (new repos, stars) stays fresh.
-    - cron: '23 9 * * *'
+    # Hourly site rebuild so build-time GitHub data (Home featured rows, new repos) stays fresh.
+    - cron: '23 * * * *'
 
 # Never run two deploys at once; queue instead of cancelling a deploy mid-rsync.
 concurrency:

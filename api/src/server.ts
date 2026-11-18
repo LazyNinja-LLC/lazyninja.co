@@ -12,7 +12,7 @@ loadEnv();
 const config = loadConfig();
 const store = createStore(config);
 const mailer = createMailer(config) ?? (config.isProd ? null : consoleMailer);
-const github = new GitHubCache(store, githubFetcher(config));
+const github = new GitHubCache(store, githubFetcher(config), { maxAgeMs: config.github.cacheMaxAgeMs });
 
 const app = createApp({ config, store, mailer, github });
 const server = app.listen(config.port, () => {

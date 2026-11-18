@@ -4,7 +4,8 @@ import type { Project } from '../../../shared/github/types';
 import type { Config } from '../config';
 import type { RepoCache, Store } from '../store/types';
 
-export const CACHE_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+/** Default; production uses GITHUB_CACHE_MINUTES (60 unless set). */
+export const CACHE_MAX_AGE_MS = 60 * 60 * 1000;
 const FAILURE_BACKOFF_MS = 10 * 60 * 1000;
 
 export type ProjectFetcher = () => Promise<Project[]>;
@@ -24,7 +25,7 @@ export function githubFetcher(config: Config): ProjectFetcher {
 
 /**
  * Serves repos from the MySQL cache. Never calls GitHub per request: only when
- * the cache is older than 6 hours (or empty), deduplicated, with a backoff after
+ * the cache is older than GITHUB_CACHE_MINUTES (or empty), deduplicated, with a backoff after
  * failures. A stale cache is served immediately while it refreshes.
  */
 export class GitHubCache {
