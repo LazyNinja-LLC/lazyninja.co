@@ -5,7 +5,7 @@ import type { GitHubSnapshot, Project, SourceId } from '../../../shared/github/t
 import { GITHUB } from '../config/site';
 
 const snapshot = githubData as GitHubSnapshot;
-const overrides = Object.fromEntries(
+export const overrides = Object.fromEntries(
   Object.entries(overridesJson as Record<string, unknown>).filter(([k]) => !k.startsWith('$')),
 ) as Record<string, ProjectOverride>;
 
@@ -40,6 +40,3 @@ export function allLanguages(): string[] {
   return [...new Set(projects.flatMap((p) => p.languages))].sort();
 }
 
-export function allTags(): string[] {
-  return [...new Set(projects.flatMap((p) => p.tags))].sort();
-}

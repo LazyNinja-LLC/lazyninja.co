@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
+import { applyOverrides, sortProjects, type ProjectOverride } from '../../../../shared/github/filter';
 import type { Project, ProjectStatus, SourceId } from '../../../../shared/github/types';
 import ProjectCard from './ProjectCard';
 
 export interface ProjectExplorerProps {
   projects: Project[];
   writeups: Record<string, string>;
-  languages: string[];
-  tags: string[];
+  /** project-overrides.json, applied to repos that only exist in the live API data. */
+  overrides: Record<string, ProjectOverride>;
   apiUrl: string;
 }
 
@@ -23,22 +24,20 @@ interface Filters {
 
 const DEFAULT_FILTERS: Filters = { source: 'all', status: 'all', language: '', tag: '', q: '' };
 
-/** Live stats from the API. Only stars and last-updated are merged; everything else stays build-time. */
-interface LiveRepo {
-  key: string;
-  stars: number;
-  updatedAt: string | null;
+/** Response of GET /github/repos: the filtered repo list from the API's MySQL cache. */
+interface LiveData {
+  repos: Project[];
+  stale: boolean;
 }
 
 export default function ProjectExplorer({
-  projects,
+  projects: buildProjects,
   writeups,
-  languages,
-  tags,
+  overrides,
   apiUrl,
 }: ProjectExplorerProps) {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  const [live, setLive] = useState<Map<string, LiveRepo>>(new Map());
+  const [live, setLive] = useState<LiveData | null>(null);
 
   // Restore filters from the URL so filtered views are shareable.
   useEffect(() => {
@@ -61,15 +60,15 @@ export default function ProjectExplorer({
     history.replaceState(null, '', qs ? `?${qs}` : location.pathname);
   }, [filters]);
 
-  // Quietly refresh stats from the API; keep build data on any failure.
+  // Quietly refresh from the API; keep build data on any failure.
   useEffect(() => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 6000);
     fetch(`${apiUrl}/github/repos`, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data: { repos?: LiveRepo[] } | null) => {
-        if (!data?.repos) return;
-        setLive(new Map(data.repos.map((r) => [r.key.toLowerCase(), r])));
+      .then((data: Partial<LiveData> | null) => {
+        if (!Array.isArray(data?.repos)) return;
+        setLive({ repos: data.repos, stale: data.stale === true });
       })
       .catch(() => {})
       .finally(() => clearTimeout(timer));
@@ -79,18 +78,46 @@ export default function ProjectExplorer({
     };
   }, [apiUrl]);
 
-  const merged = useMemo(
-    () =>
-      projects.map((p) => {
-        const l = live.get(p.key);
-        return l ? { ...p, stars: l.stars ?? p.stars, updatedAt: l.updatedAt ?? p.updatedAt } : p;
-      }),
-    [projects, live],
-  );
+  /**
+   * Fresh, non-empty API data is the source of truth for which repos exist: repos deleted or
+   * hidden on GitHub since the last build disappear, and new ones appear. Stale or empty data
+   * only refreshes stars / last-updated, so a broken cache never empties the page.
+   */
+  const projects = useMemo(() => {
+    if (!live) return buildProjects;
+    const byKey = new Map(live.repos.map((r) => [r.key.toLowerCase(), r]));
+    if (live.stale || byKey.size === 0) {
+      return buildProjects.map((p) => {
+        const l = byKey.get(p.key);
+        return l ? { ...p, stars: l.stars, updatedAt: l.updatedAt ?? p.updatedAt } : p;
+      });
+    }
+    const built = new Map(buildProjects.map((p) => [p.key, p]));
+    const fresh = applyOverrides(
+      live.repos.filter((r) => !built.has(r.key.toLowerCase())),
+      overrides,
+    );
+    const kept = buildProjects
+      .filter((p) => byKey.has(p.key))
+      .map((p) => {
+        const l = byKey.get(p.key)!;
+        return {
+          ...p,
+          stars: l.stars,
+          updatedAt: l.updatedAt ?? p.updatedAt,
+          status: l.status,
+          featured: l.featured,
+        };
+      });
+    return sortProjects([...kept, ...fresh]);
+  }, [buildProjects, live, overrides]);
+
+  const languages = useMemo(() => [...new Set(projects.flatMap((p) => p.languages))].sort(), [projects]);
+  const tags = useMemo(() => [...new Set(projects.flatMap((p) => p.tags))].sort(), [projects]);
 
   const visible = useMemo(() => {
     const q = filters.q.trim().toLowerCase();
-    return merged.filter(
+    return projects.filter(
       (p) =>
         (filters.source === 'all' || p.source === filters.source) &&
         (filters.status === 'all' || p.status === filters.status) &&
@@ -102,7 +129,7 @@ export default function ProjectExplorer({
             .toLowerCase()
             .includes(q)),
     );
-  }, [merged, filters]);
+  }, [projects, filters]);
 
   const counts = useMemo(
     () => ({
