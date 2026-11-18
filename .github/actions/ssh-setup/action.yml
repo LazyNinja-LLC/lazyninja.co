@@ -75,6 +75,11 @@ runs:
           echo "  BatchMode yes"
           echo "  ServerAliveInterval 30"
           echo "  ConnectTimeout 20"
+          # Reuse one connection for every ssh/rsync in the job: fewer logins, so the host's
+          # brute-force protection is far less likely to block the runner.
+          echo "  ControlMaster auto"
+          echo "  ControlPath ~/.ssh/cm-%C"
+          echo "  ControlPersist 10m"
         } > ~/.ssh/config
         chmod 600 ~/.ssh/config
 
