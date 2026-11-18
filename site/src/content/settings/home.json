@@ -1,10 +1,18 @@
 {
   "hero": {
     "kicker": "The LazyNinja dojo · Websites · AI · Tools",
-    "titleLines": ["The art of", "doing less,", "beautifully."],
+    "titleLines": [
+      "The art of",
+      "doing less,",
+      "beautifully."
+    ],
     "lede": "LazyNinja LLC builds small, sharp software: websites, AI integrations and tools that quietly do the busywork.",
     "nightKicker": "Night training · Websites · AI · Tools",
-    "nightTitleLines": ["Train hard", "after dark.", "Ship lazy."],
+    "nightTitleLines": [
+      "Train hard",
+      "after dark.",
+      "Ship lazy."
+    ],
     "nightLede": "Small, sharp software, built in the quiet hours: websites, AI integrations and tools that do the busywork while you sleep.",
     "primaryButton": "Begin a project",
     "secondaryButton": "See the work"
@@ -14,14 +22,20 @@
     "greeting": "Hi, I'm",
     "name": "Tyler.",
     "lead": "I run LazyNinja LLC: a one-person dojo for software that does the boring parts for you.",
-    "text": "",
+    "text": "I am Tyler, I am a student at MSU planning to study abroad in Amsterdam this Spring 2027. I really enjoy building projects that can help clear the busywork and help me focus on the big picture.",
     "photoCaption": "Off the mat"
   },
   "contact": {
     "kicker": "Let's work together",
-    "titleLines": ["The dojo", "is open."],
+    "titleLines": [
+      "The dojo",
+      "is open."
+    ],
     "nightKicker": "Working late? So am I.",
-    "nightTitleLines": ["The dojo", "never sleeps."],
+    "nightTitleLines": [
+      "The dojo",
+      "never sleeps."
+    ],
     "text": "Tell me what's slowing you down.",
     "button": "Start a project"
   }
