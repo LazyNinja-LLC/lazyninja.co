@@ -112,7 +112,10 @@ function createClient(options: FetchOptions) {
     // Include GitHub's own explanation (e.g. org token policies on 403s); it never contains the token.
     const reason = await res
       .json()
-      .then((body: { message?: unknown }) => (typeof body.message === 'string' ? `: ${body.message}` : ''))
+      .then((body: unknown) => {
+        const message = (body as { message?: unknown } | null)?.message;
+        return typeof message === 'string' ? `: ${message}` : '';
+      })
       .catch(() => '');
     throw new Error(`GitHub ${res.status} for ${url}${reason}`);
   }
