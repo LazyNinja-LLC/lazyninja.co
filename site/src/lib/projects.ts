@@ -39,4 +39,3 @@ export function sourceForRepo(repo: string): (typeof GITHUB.sources)[number] | u
 export function allLanguages(): string[] {
   return [...new Set(projects.flatMap((p) => p.languages))].sort();
 }
-
