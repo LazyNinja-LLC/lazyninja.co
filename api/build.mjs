@@ -1,5 +1,5 @@
 /**
- * Bundles the API with esbuild into dist/ as plain CommonJS for Node 20:
+ * Bundles the API with esbuild into dist/ as plain CommonJS for Node 22:
  *   dist/app.js   Passenger startup file
  *   dist/sync.js  cron job (npm run sync)
  * plus package.json + package-lock.json, so dist/ is exactly what gets deployed
@@ -21,7 +21,7 @@ await build({
   outdir: 'dist',
   bundle: true,
   platform: 'node',
-  target: 'node20',
+  target: 'node22',
   format: 'cjs',
   packages: 'external',
   sourcemap: false,

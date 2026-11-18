@@ -19,15 +19,15 @@ Push to `main` → `.github/workflows/deploy.yml`:
    `api/**` or `shared/**` → API job. A manual run (**Actions → Deploy → Run workflow**) deploys
    both. A daily scheduled run rebuilds the site so GitHub stats and new repos stay fresh.
 2. **CI** (`ci.yml`, called as a reusable workflow): lint + Prettier, `.htaccess` copy check,
-   site type-check + build, API type-check + tests + build (API on Node 20, like the server).
+   site type-check + build, API type-check + tests + build (everything on Node 22, like the server).
    Nothing deploys unless CI passes. The deploy build is _strict_: if GitHub can't be reached,
    the build fails instead of shipping an empty Projects page.
 3. **Deploy site**: `rsync -az --delete site/dist/ → public_html/`, excluding `.well-known/`
-   (AutoSSL) and `cgi-bin/`. The `.htaccess` ships inside the build.
+   (ACME challenges for acme.sh) and `cgi-bin/`. The `.htaccess` ships inside the build.
 4. **Deploy API**: `rsync -az --delete api/dist/ → /home/lazyjapy/api/`, excluding `.env`,
    `node_modules/`, `tmp/`, `logs/` (plus `public/`, `.htaccess` and `stderr.log`, which
    Passenger/cPanel may create). Then, over SSH:
-   - if `/home/lazyjapy/nodevenv/api/20/bin/activate` exists: activate it, `npm ci --omit=dev`,
+   - if `/home/lazyjapy/nodevenv/api/22/bin/activate` exists: activate it, `npm ci --omit=dev`,
      `touch tmp/restart.txt` (Passenger restart);
    - otherwise: print a warning (**"Node app not created in cPanel yet"**) and skip without failing.
 5. **Smoke test**: `curl -fsS https://lazyninja.co/` (retried; **fails** the run if down) and
@@ -67,45 +67,51 @@ Lines look like `[premium149.web-hosting.com]:21098 ssh-ed25519 AAAA…`.
 
 ## 2. One-time server setup (cPanel)
 
-Do these once, in order. The first push to `main` can happen before or after: the site
-deploys immediately and the API job skips cleanly until step 2.2 is done.
+### Status
 
-### 2.1 Subdomain `api.lazyninja.co`
+| Step | State |
+| --- | --- |
+| 2.1 Subdomain `api.lazyninja.co` | ✅ Done |
+| 2.2 Node.js app (Node 22) | ✅ Done |
+| 2.3 MySQL database `lazyjapy_site` | ✅ Done (confirm the schema import below) |
+| 2.4 `.env` on the server | To do |
+| 2.5 Cron job | ✅ Done |
+| 2.6 SSL via acme.sh | ✅ `lazyninja.co` + `www`; add `api.lazyninja.co` |
 
-**cPanel → Domains → Create A New Domain**
+The steps below are kept as a reference for rebuilding the server.
 
-- Domain: `api.lazyninja.co`
-- Uncheck "Share document root". Document root: `/home/lazyjapy/api.lazyninja.co`
-  (any folder works; Passenger routes requests to the app). **Not** `/home/lazyjapy/api`.
+### 2.1 Subdomain `api.lazyninja.co` ✅
 
-### 2.2 Node.js app
+Created in **cPanel → Domains**, with its own document root (not `/home/lazyjapy/api`, which is
+the app root). Passenger routes requests to the app.
 
-**cPanel → Software → Setup Node.js App → Create Application**
+### 2.2 Node.js app ✅
 
-| Field                    | Value                    |
-| ------------------------ | ------------------------ |
-| Node.js version          | **20.x**                 |
-| Application mode         | **Production**           |
+**cPanel → Software → Setup Node.js App**:
+
+| Field                    | Value                          |
+| ------------------------ | ------------------------------ |
+| Node.js version          | **22.x**                       |
+| Application mode         | **Production**                 |
 | Application root         | `api` (= `/home/lazyjapy/api`) |
-| Application URL          | `api.lazyninja.co`       |
-| Application startup file | `app.js`                 |
+| Application URL          | `api.lazyninja.co`             |
+| Application startup file | `app.js`                       |
 
-Click **Create**. This creates `/home/lazyjapy/nodevenv/api/20/bin/activate`, the path the
-deploy and cron rely on. If the deploy already synced files into `/home/lazyjapy/api`, that's
-fine. If cPanel created a sample `app.js`, the next deploy overwrites it.
+Its virtual environment is `/home/lazyjapy/nodevenv/api/22/bin/activate`, the path the deploy
+and cron use. If the app is ever moved to another Node version, update `NODE_ACTIVATE` in
+`.github/workflows/deploy.yml` and the paths in `deploy/cron.md` and this file.
 
 You don't need cPanel's "Environment variables" section: the app reads `/home/lazyjapy/api/.env`
 (step 2.4). Don't click "Run NPM Install" either; the deploy runs `npm ci --omit=dev`.
 
-### 2.3 MySQL database
+### 2.3 MySQL database `lazyjapy_site` ✅
 
-**cPanel → Databases → MySQL Databases**
+The database exists. Make sure:
 
-1. Create database, e.g. `lazyjapy_site`.
-2. Create user, e.g. `lazyjapy_api`, with a long random password.
-3. Add the user to the database with **ALL PRIVILEGES**.
-4. **cPanel → phpMyAdmin** → select the database → **Import** → upload `deploy/schema.sql` → Go.
-   (Safe to re-run; every statement is `CREATE TABLE IF NOT EXISTS`.)
+1. A database user (e.g. `lazyjapy_api`) is added to `lazyjapy_site` with **ALL PRIVILEGES**
+   (**cPanel → MySQL Databases → Add User To Database**).
+2. The schema is imported: **cPanel → phpMyAdmin** → `lazyjapy_site` → **Import** →
+   `deploy/schema.sql` → Go. It's safe to re-run: every statement is `CREATE TABLE IF NOT EXISTS`.
 
 Tables: `github_repo_cache`, `sync_state`, `contact_messages`, `rate_limits`, `page_views`.
 
@@ -119,10 +125,11 @@ NODE_ENV=production
 
 DB_HOST=localhost
 DB_USER=lazyjapy_api
-DB_PASSWORD=<the MySQL password from 2.3>
+DB_PASSWORD=<the MySQL user's password>
 DB_NAME=lazyjapy_site
 
-SMTP_HOST=mail.lazyninja.co
+# The server hostname: its certificate is valid for SMTP over SSL (mail.lazyninja.co's isn't).
+SMTP_HOST=premium149.web-hosting.com
 SMTP_PORT=465
 SMTP_USER=no-reply@lazyninja.co
 SMTP_PASS=<password of the no-reply@lazyninja.co mailbox>
@@ -145,19 +152,32 @@ Mailboxes `tyler@lazyninja.co` and `no-reply@lazyninja.co` must exist (**cPanel 
 
 After creating `.env`, restart the app (**Setup Node.js App → Restart**), or re-run the deploy.
 
-### 2.5 Cron job
+### 2.5 Cron job ✅
 
-See [`deploy/cron.md`](deploy/cron.md): every 6 hours, `npm run sync` (GitHub cache refresh +
-13-month analytics purge). Run it once by hand to fill the cache right away.
+Configured as described in [`deploy/cron.md`](deploy/cron.md): every 6 hours, `npm run sync`
+(GitHub cache refresh + 13-month analytics purge). Run it once by hand after step 2.4 to fill the
+cache right away.
 
-### 2.6 SSL (AutoSSL)
+### 2.6 SSL (acme.sh)
 
-**cPanel → Security → SSL/TLS Status** → select `lazyninja.co`, `www.lazyninja.co` and
-`api.lazyninja.co` → **Run AutoSSL**. The `.htaccess` leaves `/.well-known/` alone and the
-deploy never deletes it, so renewals keep working. Once certificates are issued, the
-`.htaccess` forces HTTPS and redirects `www` → `lazyninja.co`.
+Certificates come from **acme.sh** (Let's Encrypt), not cPanel AutoSSL. `lazyninja.co` and
+`www.lazyninja.co` are covered. `api.lazyninja.co` needs a certificate too: add it to acme.sh
+the same way as the main domain and install it into cPanel. For example, with acme.sh's cPanel
+deploy hook:
 
-### 2.7 First full deploy
+```sh
+acme.sh --issue -d api.lazyninja.co -w <the subdomain's document root>
+acme.sh --deploy -d api.lazyninja.co --deploy-hook cpanel_uapi
+```
+
+acme.sh renews through its own cron entry. Deploys exclude `.well-known/` from `rsync --delete`
+and the `.htaccess` serves `/.well-known/` before any redirect, so HTTP-01 challenges in
+`public_html` keep working.
+
+HSTS is sent **without `includeSubDomains`**, so subdomains that aren't on HTTPS (e.g. `mail.`,
+`webmail.`) aren't forced onto it.
+
+### 2.7 Full deploy
 
 **GitHub → Actions → Deploy → Run workflow** (on `main`). Both the site and the API deploy,
 then the smoke tests run (section 5).
@@ -193,7 +213,7 @@ npm run package     # builds everything, writes deploy/out/site.zip and deploy/o
 - `deploy/out/api.zip`: `app.js`, `sync.js`, `package.json`, `package-lock.json` (no
   `node_modules`, `.env` or tests). Upload and extract into `/home/lazyjapy/api/`, then:
   ```sh
-  source /home/lazyjapy/nodevenv/api/20/bin/activate
+  source /home/lazyjapy/nodevenv/api/22/bin/activate
   cd /home/lazyjapy/api
   npm ci --omit=dev
   mkdir -p tmp && touch tmp/restart.txt
@@ -240,7 +260,7 @@ The contact form is easiest to test in a browser at https://lazyninja.co/contact
 | Symptom                                    | Check                                                                 |
 | ------------------------------------------ | --------------------------------------------------------------------- |
 | Deploy fails at SSH: "Host key verification failed" | `SSH_KNOWN_HOSTS` must contain the `[host]:21098` entry (section 1). |
-| API job warns "Node app not created in cPanel yet" | Do step 2.2, then re-run the deploy.                              |
+| API job warns "Node app not created in cPanel yet" | The venv at `/home/lazyjapy/nodevenv/api/22/` is missing: check step 2.2. |
 | `/health` 503 / app won't start            | `/home/lazyjapy/api/stderr.log`: usually a missing `.env` value.      |
 | Projects page shows old stats              | Normal until the API cache is filled: run `npm run sync` (cron.md).  |
 | Contact form shows the email fallback      | API down or CORS: check `/health` and `ALLOWED_ORIGINS`.             |

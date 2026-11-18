@@ -8,7 +8,7 @@ The website of **LazyNinja LLC**: a static Astro site plus a small Express API.
 
 ```
 site/      Astro 7 + TypeScript + Tailwind v4 (React islands for filters, contact form, theme toggle)
-api/       Express 5 + zod + nodemailer + mysql2, bundled to plain JS for Node 20 / Passenger
+api/       Express 5 + zod + nodemailer + mysql2, bundled to plain JS for Node 22 / Passenger
 shared/    GitHub filter + fetch logic used by both the site build and the API
 deploy/    .htaccess source, schema.sql, cron.md
 scripts/   dev runner, packaging, .htaccess check
@@ -21,7 +21,7 @@ Deployment is covered in [DEPLOY.md](DEPLOY.md), and choices beyond the spec in 
 
 - **Node 22+** for development and the site build (Astro 7 requires ≥ 22.12). `.nvmrc` says 22.
   With nvm-windows: `nvm install 22 && nvm use 22`.
-- The **API targets Node 20** (the server runtime) and CI tests it on Node 20.
+- The **API targets Node 22** (the server runtime) and CI tests it on Node 22.
 - **npm** (lockfiles are npm's; `site/` and `api/` are separate npm projects so the API can be
   deployed with its own lockfile and `npm ci --omit=dev`).
 

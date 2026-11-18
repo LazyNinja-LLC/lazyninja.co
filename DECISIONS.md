@@ -12,16 +12,15 @@ Choices the spec left open, and why. Newest context: November 2026.
 - **Shared GitHub logic lives in `shared/github/`** (plain TypeScript, no dependencies). The
   site imports it in the build script and components; the API bundles it via esbuild. One
   filter implementation, tested once.
-- **Astro 7 (latest stable) requires Node ≥ 22.12**, so the site builds on Node 22 in CI and
-  locally (`.nvmrc`). The API targets **Node 20** (server runtime): esbuild `target: node20`,
-  CI runs API type-check/tests/build on Node 20, and the bundle was smoke-tested on Node 20.19.
+- **Node 22 everywhere.** Astro 7 (latest stable) requires Node ≥ 22.12, and the server's cPanel
+  Node.js app runs Node 22 (venv `/home/lazyjapy/nodevenv/api/22`). CI, `.nvmrc`, the API's
+  esbuild target (`node22`), `engines` and `@types/node` all match.
 - **The API is bundled with esbuild** into `dist/app.js` + `dist/sync.js` (CommonJS, deps
   external). `tsc --noEmit` does type-checking. `dist/` (bundles + `package.json` + lockfile)
   is exactly what gets rsynced, so `app.js` sits at the API root as Passenger expects.
 - **TypeScript 6.0**, not 7.0: `typescript-eslint` and `@astrojs/check` don't support TS 7 yet.
 - **Vitest pinned to 4.0.x**: Vitest 4.1/5 hit an npm 10/11 install bug (`Cannot read
-  properties of null (reading 'edgesOut')`) on this machine, and 5.x requires Node 22, while the
-  API's tests should run on Node 20.
+  properties of null (reading 'edgesOut')`) on the development machine.
 - **ESLint 9 flat config** at the root covers both projects (`eslint-plugin-astro`,
   `typescript-eslint`, React hooks rules). Prettier with `prettier-plugin-astro`.
 - `@emnapi/core`/`@emnapi/runtime` are site dev dependencies so `astro check` works on
@@ -133,6 +132,14 @@ Choices the spec left open, and why. Newest context: November 2026.
   console mailer, so `npm run dev` works with zero setup. `STORE=memory` is rejected in production.
 
 ## Deploy
+
+- **SSL comes from acme.sh** (Let's Encrypt), not cPanel AutoSSL. `/.well-known/` is served before
+  any redirect and is never deleted by deploys.
+- **HSTS without `includeSubDomains`**: `mail.`, `webmail.` and other cPanel subdomains aren't
+  on the site's certificate, so forcing HTTPS on every subdomain would break them.
+- **SMTP via `premium149.web-hosting.com`**: the server hostname's certificate is valid, while
+  `mail.lazyninja.co` is served the shared `*.web-hosting.com` certificate (a hostname mismatch
+  that nodemailer rejects).
 
 - **CI runs once per deploy:** `deploy.yml` calls `ci.yml` as a reusable workflow, and the
   deploy jobs download CI's build artifacts, so what was tested is what ships. `ci.yml`

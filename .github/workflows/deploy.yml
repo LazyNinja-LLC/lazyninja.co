@@ -19,7 +19,7 @@ permissions:
 env:
   SITE_PATH: /home/lazyjapy/public_html/
   API_PATH: /home/lazyjapy/api/
-  NODE_ACTIVATE: /home/lazyjapy/nodevenv/api/20/bin/activate
+  NODE_ACTIVATE: /home/lazyjapy/nodevenv/api/22/bin/activate
 
 jobs:
   changes:
@@ -96,7 +96,7 @@ jobs:
           known-hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
       - name: Sync site to public_html
         run: |
-          # .well-known/ (AutoSSL) and cgi-bin/ are excluded, so --delete never touches them.
+          # .well-known/ (ACME / acme.sh) and cgi-bin/ are excluded, so --delete never touches them.
           rsync -az --delete --itemize-changes \
             --exclude '.well-known/' \
             --exclude 'cgi-bin/' \

@@ -10,8 +10,8 @@ Cron is only used for data refresh. The API itself is started on demand by Passe
    (LazyNinja-LLC org + WammumTy user), using the shared filter rules.
 2. Purges `page_views` rows older than **13 months** and expired `rate_limits` rows.
 
-Add this in **cPanel → Cron Jobs → Add New Cron Job**, using the "Once Per Six Hours" preset
-(`0 */6 * * *`) or entering the fields by hand:
+This job is **already configured** in **cPanel → Cron Jobs**. For reference (or to recreate it),
+use the schedule `7 */6 * * *`:
 
 | Minute | Hour  | Day | Month | Weekday |
 | ------ | ----- | --- | ----- | ------- |
@@ -20,10 +20,10 @@ Add this in **cPanel → Cron Jobs → Add New Cron Job**, using the "Once Per S
 Command (one line):
 
 ```sh
-/bin/bash -c 'source /home/lazyjapy/nodevenv/api/20/bin/activate && cd /home/lazyjapy/api && mkdir -p logs && npm run sync >> logs/sync.log 2>&1'
+/bin/bash -c 'source /home/lazyjapy/nodevenv/api/22/bin/activate && cd /home/lazyjapy/api && mkdir -p logs && npm run sync >> logs/sync.log 2>&1'
 ```
 
-- `source …/activate` puts the cPanel Node 20 `node`/`npm` on the PATH (they are not on the
+- `source …/activate` puts the cPanel Node 22 `node`/`npm` on the PATH (they are not on the
   default PATH). The path only exists after the Node.js app is created in cPanel.
 - It reads `/home/lazyjapy/api/.env` (DB credentials, `GITHUB_SOURCES`, `GITHUB_TOKEN`).
 - Output goes to `/home/lazyjapy/api/logs/sync.log`. Deploys never touch `logs/`.
@@ -42,7 +42,7 @@ Schedule: `0 3 1 * *`.
 ## Run it by hand (cPanel → Terminal)
 
 ```sh
-source /home/lazyjapy/nodevenv/api/20/bin/activate
+source /home/lazyjapy/nodevenv/api/22/bin/activate
 cd /home/lazyjapy/api
 npm run sync
 ```
