@@ -1,5 +1,8 @@
 name: SSH setup
-description: Writes the deploy key and pinned known_hosts, and defines the `deploy` SSH host alias. Never disables host key checking.
+description: >-
+  Writes the deploy key and pinned known_hosts, defines the `deploy` SSH host alias,
+  then checks the connection and explains any failure. Never disables host key checking
+  and never prints secret values.
 inputs:
   host:
     required: true
@@ -24,11 +27,42 @@ runs:
         SSH_KNOWN_HOSTS: ${{ inputs.known-hosts }}
       run: |
         set -euo pipefail
+
+        # 1. Every secret must be set (names only are printed, never values).
+        missing=()
+        [ -n "$SSH_HOST" ] || missing+=(SSH_HOST)
+        [ -n "$SSH_PORT" ] || missing+=(SSH_PORT)
+        [ -n "$SSH_USER" ] || missing+=(SSH_USER)
+        [ -n "$SSH_PRIVATE_KEY" ] || missing+=(SSH_PRIVATE_KEY)
+        [ -n "$SSH_KNOWN_HOSTS" ] || missing+=(SSH_KNOWN_HOSTS)
+        if [ ${#missing[@]} -gt 0 ]; then
+          echo "::error title=Missing deploy secrets::Not set: ${missing[*]}. Add them under Settings → Secrets and variables → Actions (see DEPLOY.md §1)."
+          exit 1
+        fi
+        if ! [[ "$SSH_PORT" =~ ^[0-9]+$ ]]; then
+          echo "::error title=Bad SSH_PORT::SSH_PORT must be a number (21098)."
+          exit 1
+        fi
+
         install -d -m 700 ~/.ssh
-        printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+        # Normalize Windows line endings in pasted secrets.
+        printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/deploy_key
         chmod 600 ~/.ssh/deploy_key
-        printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+        printf '%s\n' "$SSH_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
         chmod 600 ~/.ssh/known_hosts
+
+        # 2. The private key must be a complete, unencrypted key.
+        if ! ssh-keygen -y -P '' -f ~/.ssh/deploy_key > /dev/null 2>&1; then
+          echo "::error title=Bad SSH_PRIVATE_KEY::The key can't be read. Paste the whole PRIVATE key including the BEGIN/END lines, and make sure it has no passphrase (CI can't type one)."
+          exit 1
+        fi
+
+        # 3. known_hosts must have an entry for this host *and port*.
+        if ! ssh-keygen -F "[${SSH_HOST}]:${SSH_PORT}" -f ~/.ssh/known_hosts > /dev/null; then
+          echo "::error title=Bad SSH_KNOWN_HOSTS::No entry for [host]:${SSH_PORT}. Generate it with: ssh-keyscan -p ${SSH_PORT} <host> (see DEPLOY.md §1). Lines must start with [host]:${SSH_PORT}."
+          exit 1
+        fi
+
         {
           echo "Host deploy"
           echo "  HostName ${SSH_HOST}"
@@ -38,8 +72,28 @@ runs:
           echo "  IdentitiesOnly yes"
           echo "  StrictHostKeyChecking yes"
           echo "  UserKnownHostsFile ~/.ssh/known_hosts"
+          echo "  BatchMode yes"
           echo "  ServerAliveInterval 30"
           echo "  ConnectTimeout 20"
         } > ~/.ssh/config
         chmod 600 ~/.ssh/config
-        echo "SSH configured for the deploy host (strict host key checking on)."
+
+        # 4. Connection test with a plain-English diagnosis.
+        if out=$(ssh deploy true 2>&1); then
+          echo "SSH connection OK (strict host key checking on)."
+        else
+          echo "$out" | sed 's/^/  ssh: /'
+          if echo "$out" | grep -q "Host key verification failed\|REMOTE HOST IDENTIFICATION HAS CHANGED"; then
+            hint="The server's host key doesn't match SSH_KNOWN_HOSTS. Regenerate it with ssh-keyscan -p ${SSH_PORT} and verify the fingerprint."
+          elif echo "$out" | grep -q "Permission denied"; then
+            hint="The server rejected the key. Check that the matching PUBLIC key is in cPanel → SSH Access → Manage SSH Keys and is Authorized, and that SSH_USER is lazyjapy."
+          elif echo "$out" | grep -qi "Could not resolve\|Name or service not known"; then
+            hint="SSH_HOST doesn't resolve. It should be premium149.web-hosting.com."
+          elif echo "$out" | grep -qi "timed out\|Connection refused"; then
+            hint="Can't reach the SSH port. SSH_PORT should be 21098, and SSH access must be enabled for the account."
+          else
+            hint="See the ssh output above."
+          fi
+          echo "::error title=SSH connection failed::${hint}"
+          exit 1
+        fi

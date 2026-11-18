@@ -24,12 +24,12 @@ env:
 jobs:
   changes:
     name: Detect changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       site: ${{ steps.diff.outputs.site }}
       api: ${{ steps.diff.outputs.api }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - id: diff
@@ -72,10 +72,10 @@ jobs:
     name: Deploy site
     needs: [changes, ci]
     if: needs.changes.outputs.site == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: site-dist
           path: dist
@@ -106,10 +106,10 @@ jobs:
     name: Deploy API
     needs: [changes, ci]
     if: needs.changes.outputs.api == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
         with:
           name: api-dist
           path: api-dist
@@ -149,7 +149,7 @@ jobs:
     name: Smoke test
     needs: [site, api]
     if: always() && (needs.site.result == 'success' || needs.api.result == 'success')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Site responds (required)
         run: |
